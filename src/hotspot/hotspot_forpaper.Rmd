@@ -38,7 +38,7 @@ source("hotspot.R")
 
 import module data and metadata
 ```{r}
-all_cells <- read.csv("ani_mod_scores_allcells.csv")
+all_cells <- read.csv("docs/ani_mod_scores_allcells.csv")
 
 metadata <- read.csv("../../docs/seq_beh_metadata.csv") %>% process_metadata() %>% group_level()
 ```
@@ -60,7 +60,7 @@ for (i in 1:23) {
 ```
 get which genes are in which module
 ```{r}
-mod_genes <- read.csv("new_clusts_hotspot-gene-modules.csv")
+mod_genes <- read.csv("docs/new_clusts_hotspot-gene-modules.csv")
 
 ```
 
@@ -184,7 +184,7 @@ for (mod in modules) {
   
   EMM <- emmeans(fit, ~ sex*SS_OS)
   coef <- contrast(EMM, "pairwise")[c(1, 2, 5, 6)]
-  coef2 <- summary(coef, adjust = "fdr") #[["sex*SSOS"]])
+  coef2 <- summary(coef, adjust = "fdr")
   print(coef2)
   mini.df <- coef2 %>% as.data.frame()
   mini.df$Module <- mod
