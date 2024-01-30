@@ -1,0 +1,345 @@
+---
+title: "UMAP Clustering and cell type proportions"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+#load packages
+library(dplyr)
+library(tidyr)
+library(Seurat)
+library(scCustomize)
+library(ggplot2)
+library(forcats)
+library(ggpubr)
+library(palettetown)
+library(gridExtra)
+library(glmmTMB)
+library(DHARMa)
+```
+
+import previously saved seurat object
+```{r}
+#import seurat object. samples from all animals have already been integrated and non-nucleus accumbens cells have already been filtered out
+#this file should be ~17.6 GB when imported
+SCT_norm <- readRDS("output/SCT_norm.rds")
+```
+
+create aesthetic UMAP
+```{r, fig.width = 9.5, fig.height = 7}
+#pick new palette for UMAP
+palette <- c("#304880", "#4898D0", "#88C0F0", "#9060A0", "#C078C0", "#389078", "#70A830", "#98D048", "#60D0A0", "#80E8C0", "#783028", "#B82820", "#D04058", "#F87878", "#F89040") 
+
+#reorder clusters for plotting
+order <- c("Drd1Pdyn", "Drd1PdynOprm1", "Drd1Penk", "Drd2Penk", "Drd2NoPenk", "GABAergicNeurons", "Dlx2ImmatureNeurons", "SstNpyInterneurons", "PvalbInterneurons", "CholinergicInterneurons", "MatureOligos", "ImmatureOligos", "Astrocytes", "Microglia", "RadialGlia-LikeCells")
+
+DefaultAssay(SCT_norm) <- "SCT"
+Idents(SCT_norm) <- "new_clusts"
+
+# reorder clusters
+Idents(SCT_norm) <- factor(Idents(SCT_norm), 
+                            levels=order)
+
+#create UMAP
+ani.umap <- DimPlot(object = SCT_norm, reduction = "umap", label = FALSE, cols = palette, raster = FALSE)
+print(ani.umap)
+
+setwd("output/")
+ggsave(
+  "umap_final.pdf",
+  plot = ani.umap,
+  device = pdf,
+  scale = 1,
+  width = 9.5,
+  height = 7,
+  units = c("in"),
+  dpi = 300,
+  limitsize = FALSE,
+  bg = "white"
+)
+
+```
+
+make dotplot of known marker genes
+```{r, fig.width = 12, fig.height = 8}
+# reorder clusters so they're in right order to plot
+order <- rev(c("Drd1Pdyn", "Drd1PdynOprm1", "Drd1Penk", "Drd2Penk", "Drd2NoPenk", "GABAergicNeurons", "Dlx2ImmatureNeurons", "SstNpyInterneurons", "PvalbInterneurons", "CholinergicInterneurons", "MatureOligos", "ImmatureOligos", "Astrocytes", "Microglia", "RadialGlia-LikeCells"))
+
+Idents(SCT_norm) <- "new_clusts"
+
+Idents(SCT_norm) <- factor(Idents(SCT_norm), 
+                            levels=order)
+
+#set default assay to SCT
+DefaultAssay(SCT_norm) <- "SCT"
+
+markers.to.plot <- c("DRD1A", "DRD2", "Pdyn", "Penk", "Oprm1", "Igfbpl1", "Dlx2", "Sst", "Npy", "Vip", "Kit", "Chat", "Mog", "Olig2", "Pdgfra", "Gja1", "Aif1", "Vim", "Elavl2", "Gad1", "Syt1")
+
+#create dotplot with original colors
+dots <- DotPlot_scCustom(SCT_norm, features = markers.to.plot, dot.scale = 12, col.min=0, col.max=3, colors_use = viridis_plasma_light_high) + RotatedAxis()
+print(dots)
+
+#create dotplot with new colors
+dots <- DotPlot(SCT_norm, features = markers.to.plot, dot.scale = 12, col.min=0, col.max=3, cols = c("whitesmoke", "black")) + 
+    RotatedAxis()
+print(dots)
+
+setwd("output/")
+ggsave(
+  "dotplot_black.pdf",
+  plot = dots,
+  device = pdf,
+  scale = 1,
+  width = 12,
+  height = 8,
+  units = c("in"),
+  dpi = 300,
+  limitsize = TRUE,
+  bg = "white"
+)
+```
+
+get top marker genes for each cluster
+```{r}
+#find all markers
+Idents(SCT_norm) <- "new_clusts"
+markers <- FindAllMarkers(SCT_norm, only.pos=TRUE, min.pct=0.25, logfc.threshold=0.25)
+markers <- markers %>% group_by(cluster) %>% arrange(desc(avg_log2FC), .by_group=TRUE)
+
+setwd("output/")
+write.csv(markers, "SCT_norm_markers.csv")
+```
+
+read in markers
+```{r}
+markers <- read.csv("output/SCT_norm_markers.csv")
+```
+
+
+make heatmap of top 10 marker genes for each cluster
+this takes a long time to run
+```{r, fig.width = 12, fig.height = 8}
+DefaultAssay(SCT_norm) <- "SCT"
+Idents(SCT_norm) <- "new_clusts"
+
+order <- c("Drd1Pdyn", "Drd1PdynOprm1", "Drd1Penk", "Drd2Penk", "Drd2NoPenk", "GABAergicNeurons", "Dlx2ImmatureNeurons", "SstNpyInterneurons", "PvalbInterneurons", "CholinergicInterneurons", "MatureOligos", "ImmatureOligos", "Astrocytes", "Microglia", "RadialGlia-LikeCells")
+
+palette <- c("#304880", "#4898D0", "#88C0F0", "#9060A0", "#C078C0", "#389078", "#70A830", "#98D048", "#60D0A0", "#80E8C0", "#783028", "#B82820", "#D04058", "#F87878", "#F89040") #"#98F088", 
+
+# reorder clusters
+Idents(SCT_norm) <- factor(Idents(SCT_norm),
+                            levels=order)
+
+#find top 10 markers for each cluster
+markers %>% group_by(cluster) %>% top_n(n=10, wt=avg_log2FC) -> top10
+top10 <- top10 %>% arrange(factor(cluster, levels = order))
+
+heat <- DoHeatmap(SCT_norm, features = top10$gene, group.colors = palette) + NoLegend() + scale_fill_viridis_c(option = "magma") + theme(text = element_text(size = 8))
+
+print(heat)
+
+setwd("output/")
+ggsave(
+  "heatmap.png",
+  plot = heat,
+  device = png,
+  scale = 1,
+  width = 12,
+  height = 8,
+  units = c("in"),
+  dpi = 300,
+  limitsize = TRUE,
+  bg = "white"
+)
+```
+
+
+stacked barplot of cell types in groups
+```{r, fig.width = 8, fig.height = 10}
+# reorder clusters
+order <- c("Drd1Pdyn", "Drd1PdynOprm1", "Drd1Penk", "Drd2Penk", "Drd2NoPenk", "GABAergicNeurons", "Dlx2ImmatureNeurons", "SstNpyInterneurons", "PvalbInterneurons", "CholinergicInterneurons", "MatureOligos", "ImmatureOligos", "Astrocytes", "Microglia", "RadialGlia-LikeCells")
+palette <- c("#304880", "#4898D0", "#88C0F0", "#9060A0", "#C078C0", "#389078", "#70A830", "#98D048", "#60D0A0", "#80E8C0", "#783028", "#B82820", "#D04058", "#F87878", "#F89040") #"#98F088",
+
+Idents(SCT_norm) <- "new_clusts"
+Idents(SCT_norm) <- factor(Idents(SCT_norm), 
+                            levels=order)
+#find proportions of each cell type per group
+SCT_norm$Group <- paste(SCT_norm$Sex, SCT_norm$SSOS, sep = "_")
+props <- prop.table(table(Idents(SCT_norm), SCT_norm$Group), margin = 2)
+#x100 to get percentages
+props <- props*100
+#reorder columns to plot in correct order
+props <- props[,c("F_SS", "F_OS", "M_SS", "M_OS")]
+
+# Open a pdf file
+pdf("output/stackedbar.pdf", width = 8, height = 10)
+#set font parameters for barplot
+par(cex.axis=2, cex.lab=3)
+# Get the stacked barplot
+barplot(props, 
+        col=palette ,
+        border="white", 
+        space=0.04, 
+        font.axis=1,
+        # cex.axis = 2,
+        # cex.lab = 2,
+        xlab="Group",
+        ylab="Percent of Cells",
+        las = 1
+        # legend=rownames(props)
+        )
+#close pdf file
+dev.off()
+
+```
+import metadata
+```{r}
+metadata <- read.csv("../docs/seq_beh_metadata.csv")
+
+```
+
+
+```{r}
+#find proportions of each cell type per animal
+Idents(SCT_norm) <- "new_clusts"
+props_perani <- prop.table(table(Idents(SCT_norm), SCT_norm$Ani), margin = 2)
+#x100 to get percentages
+props_perani <- props_perani*100
+#reorder columns to plot in correct order
+# props <- props[,c("F_SS", "F_OS", "M_SS", "M_OS")]
+
+props_perani <- props_perani %>% as.data.frame
+props_perani <- props_perani %>% rename("animal" = "Var2")
+
+props_perani <- merge(props_perani, metadata, on = "animal")
+props_perani$Group <- paste(props_perani$sex, props_perani$SS_OS, sep = "_")
+
+```
+
+```{r, fig.height = 8, fig.width = 10}
+# reorder clusters
+order <- c("Drd1Pdyn", "Drd1PdynOprm1", "Drd1Penk", "Drd2Penk", "Drd2NoPenk", "GABAergicNeurons", "Dlx2ImmatureNeurons", "SstNpyInterneurons", "PvalbInterneurons", "CholinergicInterneurons", "MatureOligos", "ImmatureOligos", "Astrocytes", "Microglia", "RadialGlia-LikeCells")
+
+setwd("output/")
+#look at percentages by cluster
+my_comparisons <- list( c("F_SS", "F_OS"), c("M_SS", "M_OS"), c("F_OS", "M_OS"), c("F_SS", "M_SS"))
+for (clust in order) {
+  print(clust)
+  mini_df <- props_perani %>% filter(Var1 == clust)
+  p <- mini_df %>% mutate(Group = fct_relevel(Group, "F_SS", "F_OS", "M_SS", "M_OS")) %>% ggplot(aes(x = Group, y = Freq, fill = Group, color = Group, alpha = 0.8)) + 
+    geom_violin(lwd = 0.75) + 
+    geom_point(position = position_dodge(width = 0.75), color = "slategrey", size = 2, alpha = 1) + 
+    stat_compare_means(comparisons= my_comparisons, paired = FALSE) +
+    scale_fill_manual(values = c("F_SS" = "mediumpurple",
+                                "F_OS"="darkorchid4",
+                                "M_SS"="lightseagreen",
+                                "M_OS"="deepskyblue4")) +
+    scale_color_manual(values = c("F_SS" = "mediumpurple",
+                                "F_OS"="darkorchid4",
+                                "M_SS"="lightseagreen",
+                                "M_OS"="deepskyblue4")) +
+    ylim(0, NA) +
+    ggtitle(clust) + 
+    ylab("Percent of Cells") +
+    xlab("Group") +
+    theme_classic() +
+    theme(text = element_text(size = 40))# + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+    print(p)
+
+  
+  # fname_pdf <- paste(clust, "props_violin.pdf", sep ="_")
+  fname_png <- paste(clust, "props_violin.png", sep ="_")
+  # ggsave(fname_pdf, p, height = 8, width = 10, units = "in", device = pdf)
+  ggsave(fname_png, p, bg = "white", height = 8, width = 10, units = "in", device = png)
+  }
+
+
+```
+
+faceted plots
+```{r, fig.height = 8, fig.width = 10}
+# reorder clusters
+order <- c("Drd1Pdyn", "Drd1PdynOprm1", "Drd1Penk", "Drd2Penk", "Drd2NoPenk", "GABAergicNeurons", "Dlx2ImmatureNeurons", "SstNpyInterneurons", "PvalbInterneurons", "CholinergicInterneurons", "MatureOligos", "ImmatureOligos", "Astrocytes", "Microglia", "RadialGlia-LikeCells")
+
+#look at percentages by cluster
+my_comparisons <- list( c("F_SS", "F_OS"), c("M_SS", "M_OS"), c("F_OS", "M_OS"), c("F_SS", "M_SS"))
+plt_list <- list()
+for (clust in order) {
+  print(clust)
+  mini_df <- props_perani %>% filter(Var1 == clust)
+  p <- mini_df %>% mutate(Group = fct_relevel(Group, "F_SS", "F_OS", "M_SS", "M_OS")) %>% ggplot(aes(x = Group, y = Freq, fill = Group, color = Group, alpha = 0.8)) + 
+    geom_violin(lwd = 0.75) + 
+    geom_point(position = position_dodge(width = 0.75), color = "slategrey", size = 1, alpha = 1) + 
+    # stat_compare_means(comparisons= my_comparisons, paired = FALSE) +
+    scale_fill_manual(values = c("F_SS" = "mediumpurple",
+                                "F_OS"="darkorchid4",
+                                "M_SS"="lightseagreen",
+                                "M_OS"="deepskyblue4")) +
+    scale_color_manual(values = c("F_SS" = "mediumpurple",
+                                "F_OS"="darkorchid4",
+                                "M_SS"="lightseagreen",
+                                "M_OS"="deepskyblue4")) +
+    ylim(0, NA) +
+    ggtitle(clust) + 
+    ylab("Percent of Cells") +
+    xlab("Group") +
+    theme_classic() +
+    theme(text = element_text(size = 8))# + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+    print(p)
+
+  plt_list[[clust]] <- p
+}
+
+all_plt <- grid.arrange(grobs = plt_list, nrow = 3)
+all_plt
+
+setwd("output/")
+ggsave("all_cluster_props_violins.pdf", all_plt, width = 16, height = 8, units = "in")
+```
+do stats on violin plots
+```{r}
+props_perani_wide <- props_perani %>% pivot_wider(id_cols = c("animal", "sex", "SS_OS"), names_from = "Var1", values_from = "Freq")
+all_contrasts <- data.frame(contrast = character(), 
+                            estimate = numeric(), 
+                            SE = numeric(), 
+                            df = numeric(), 
+                            t.ratio = numeric(), 
+                            p.value = numeric(), 
+                            Module = character())
+
+for (clust in order) {
+  form <- formula(paste0(clust, "~sex*SS_OS"))
+  fit <- glmmTMB(form, data = props_perani_wide)
+  print(summary(fit))
+  
+  simres <- simulateResiduals(fit)
+  plot(simres, title = clust)
+  
+  EMM <- emmeans(fit, ~ sex*SS_OS)
+  # print(summary(pairwise_comparisons))
+  coef <- contrast(EMM, "pairwise")[c(1, 2, 5, 6)]
+  coef2 <- summary(coef, adjust = "fdr") #[["sex*SSOS"]])
+  print(coef2)
+  mini.df <- coef2 %>% as.data.frame()
+  mini.df$Cluster <- clust
+  
+  all_contrasts <- rbind(all_contrasts, mini.df)
+  
+}
+```
+
+sessioninfo
+```{r}
+sessionInfo()
+```
+
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
