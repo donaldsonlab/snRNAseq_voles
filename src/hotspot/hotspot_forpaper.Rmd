@@ -1,0 +1,276 @@
+---
+title: "Hotspot for paper"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+suppressPackageStartupMessages(library("dplyr"))
+suppressPackageStartupMessages(library("tidyr"))
+suppressPackageStartupMessages(library("svMisc"))
+suppressPackageStartupMessages(library("cowplot"))
+suppressPackageStartupMessages(library("ggplot2"))
+suppressPackageStartupMessages(library("pheatmap"))
+suppressPackageStartupMessages(library("reshape2"))
+suppressPackageStartupMessages(library("gridExtra"))
+suppressPackageStartupMessages(library("RColorBrewer"))
+suppressPackageStartupMessages(library("ivmte"))
+suppressPackageStartupMessages(library("viridis"))
+suppressPackageStartupMessages(library("palettetown"))
+suppressPackageStartupMessages(library("ComplexHeatmap"))
+suppressPackageStartupMessages(library(corrplot))
+suppressPackageStartupMessages(library(Hmisc))
+suppressPackageStartupMessages(library('corrr'))
+suppressPackageStartupMessages(library(ggcorrplot))
+suppressPackageStartupMessages(library("FactoMineR"))
+suppressPackageStartupMessages(library(stringr))
+suppressPackageStartupMessages(library(ggpubr))
+suppressPackageStartupMessages(library(ComplexHeatmap))
+library(glmmTMB)
+library(DHARMa)
+library(emmeans)
+library(Seurat)
+source("hotspot.R")
+```
+
+import module data and metadata
+```{r}
+all_cells <- read.csv("ani_mod_scores_allcells.csv")
+
+metadata <- read.csv("../../docs/seq_beh_metadata.csv") %>% process_metadata() %>% group_level()
+```
+merge meta and module data
+```{r}
+merged_data <- merge(all_cells, metadata, on = "animal")
+```
+
+
+```{r}
+modules <- get_modules(merged_data)
+
+modules <- c()
+for (i in 1:23) {
+  mod_num <- paste0("Module.", i)
+  modules <- modules %>% append(mod_num)
+}
+
+```
+get which genes are in which module
+```{r}
+mod_genes <- read.csv("new_clusts_hotspot-gene-modules.csv")
+
+```
+
+import seurat object
+```{r}
+SCT_norm <- readRDS("../seurat_clustering/output/SCT_norm.rds")
+```
+
+```{r}
+for (mod in modules) {
+  violin(merged_data, save = FALSE)
+}
+```
+```{r}
+setwd("output/")
+for (mod in "Module.6") {
+  corr_plot(merged_data, color = "deeppink4", font_size = 20, save = TRUE)
+}
+
+for (mod in "Module.11") {
+  corr_plot(merged_data, color = "chartreuse4", font_size = 20, save = TRUE)
+}
+```
+
+```{r}
+plt_list <- list()
+for (mod in modules) {
+  p <- corr_plot_bypair(merged_data, font_size = 8)
+  plt_list[[mod]] <- p
+}
+
+
+all_plt <- grid.arrange(grobs = plt_list, nrow = 6)
+
+setwd("output/")
+ggsave("all_module_corrs.pdf", all_plt, width = 16, height = 16, units = "in")
+```
+
+
+```{r}
+all_dists_df <- make_dist_df(pairs, type, fake_real, dist, Module)
+plt_list <- list()
+for (mod in modules) {
+    mod_dist_df <- get_rank_distances(merged_data)
+    all_dists_df <- rbind(all_dists_df, mod_dist_df)
+    
+    p <- plot_rank_group(mod_dist_df)
+    plt_list[[mod]] <- p
+  }
+
+plot_rank(all_dists_df)
+
+all_plt <- grid.arrange(grobs = plt_list, nrow = 6)
+
+setwd("output/")
+ggsave("all_module_dists.pdf", all_plt, width = 18, height = 18, units = "in")
+
+```
+euclidean distances between partners
+```{r}
+fake_pairs <- get_fake_pairs(merged_data)
+
+all_euclidean_dists <- data.frame()
+for (mod in modules) {
+  mod_euclidean_dists <- get_euclidean_dists(SCT_norm, mod_genes, metadata)
+  all_euclidean_dists <- rbind(all_euclidean_dists, mod_euclidean_dists)
+}
+```
+plot euclidean distances
+```{r}
+setwd("output/")
+
+plt_list <- list()
+for (mod in modules) {
+  p <- plot_euclidean_dists(all_euclidean_dists, save = FALSE)
+  plt_list[[mod]] <- p
+
+}
+
+all_plt <- grid.arrange(grobs = plt_list, nrow = 6)
+
+ggsave("all_module_euclidean_dists.pdf", all_plt, width = 18, height = 18, units = "in")
+```
+plot euclidean distances by pair type
+```{r}
+plt_list <- list()
+for (mod in modules) {
+ p <- plot_euclidean_dists_pairtype(all_euclidean_dists)
+ plt_list[[mod]] <- p
+}
+
+all_plt <- grid.arrange(grobs = plt_list, nrow = 6)
+
+setwd("output/")
+ggsave("all_module_euclidean_dists_by_pairtype.pdf", all_plt, width = 18, height = 18, units = "in")
+```
+
+summary stats from hotspot mods
+```{r}
+summs <- mod_genes %>% group_by(Module) %>% summarise(n_genes = n())
+```
+
+GLM for module expression
+```{r}
+all_contrasts <- data.frame(contrast = character(), 
+                            estimate = numeric(), 
+                            SE = numeric(), 
+                            df = numeric(), 
+                            t.ratio = numeric(), 
+                            p.value = numeric(), 
+                            Module = character())
+
+for (mod in modules) {
+  form <- formula(paste0(mod, "~sex*SS_OS"))
+  fit <- glmmTMB(form, data = merged_data)
+  print(summary(fit))
+  
+  ## if you want to simulate and plot residuals
+  # simres <- simulateResiduals(fit)
+  # plot(simres, title = mod)
+  
+  EMM <- emmeans(fit, ~ sex*SS_OS)
+  coef <- contrast(EMM, "pairwise")[c(1, 2, 5, 6)]
+  coef2 <- summary(coef, adjust = "fdr") #[["sex*SSOS"]])
+  print(coef2)
+  mini.df <- coef2 %>% as.data.frame()
+  mini.df$Module <- mod
+  
+  all_contrasts <- rbind(all_contrasts, mini.df)
+  
+}
+```
+```{r}
+setwd("output/")
+write.csv(all_contrasts, "all_glm_posthocs_module_expr.csv")
+```
+stats for rank distances between groups
+```{r}
+all_contrasts_dists <- data.frame(contrast = character(), 
+                            estimate = numeric(), 
+                            SE = numeric(), 
+                            df = numeric(), 
+                            t.ratio = numeric(), 
+                            p.value = numeric(), 
+                            Module = character())
+
+for (mod in modules) {
+  mod_df <- all_dists_df %>% filter(Module == mod)
+  fit <- glmmTMB(dist~type, data = mod_df)
+  print(summary(fit))
+  
+  simres <- simulateResiduals(fit)
+  plot(simres, title = mod)
+  
+  EMM <- emmeans(fit, ~ type)
+  coef <- contrast(EMM, "pairwise")
+  coef2 <- summary(coef, adjust = "fdr") #[["sex*SSOS"]])
+  print(coef2)
+  mini.df <- coef2 %>% as.data.frame()
+  mini.df$Module <- mod
+  
+  all_contrasts_dists <- rbind(all_contrasts_dists, mini.df)
+  
+}
+```
+```{r}
+setwd("output/")
+write.csv(all_contrasts_dists, "glm_posthocs_rank_group_comparisons.csv")
+```
+
+wilcox.test for euclidean dists
+```{r}
+all_euclidean_stats <- data.frame()
+for (mod in modules) {
+  mod_test <- all_euclidean_dists %>% filter(Module == mod)
+  mod_wilcox <- wilcox.test(dist ~ fake_real, data = mod_test)
+  wilcox_df <- data.frame(Module = mod,
+                          W = mod_wilcox$statistic[1],
+                          p.value = mod_wilcox$p.value,
+                          test = "wilcoxon test")
+  all_euclidean_stats <- rbind(all_euclidean_stats, wilcox_df)
+}
+```
+```{r}
+setwd("output/")
+write.csv(all_euclidean_stats, "euclidean_dists_fakereal_wilcoxtest.csv")
+```
+
+
+all module correlations stats
+```{r}
+corr_stats_df <- data.frame()
+for (mod in modules) {
+  mod_df <- merged_data %>% pivot_wider(id_cols = "pair", names_from = "color", values_from = mod)
+  mod_cor <- rcorr(mod_df$O, mod_df$B, type = "spearman")
+  mod_corr_stats <- data.frame(Module = mod,
+                               Rho = mod_cor$r[2],
+                               p.value = mod_cor$P[2],
+                               test = "Spearman Correlation")
+  corr_stats_df <- rbind(corr_stats_df, mod_corr_stats)
+}
+```
+```{r}
+setwd("output/")
+write.csv(corr_stats_df, "module_partner_corrs_stats.csv")
+```
+
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
