@@ -5,51 +5,16 @@ Liza Brusman
 
 ``` r
 library(dplyr)
-```
-
-    ## Warning: package 'dplyr' was built under R version 4.2.3
-
-``` r
 library(tidyr)
 library(ggplot2)
-```
-
-    ## Warning: package 'ggplot2' was built under R version 4.2.3
-
-``` r
 library(ggridges)
-```
-
-    ## Warning: package 'ggridges' was built under R version 4.2.3
-
-``` r
 library(forcats)
 library(ggpubr)
 library(glmmTMB)
-```
-
-    ## Warning: package 'glmmTMB' was built under R version 4.2.3
-
-``` r
 library(DHARMa)
-```
-
-    ## Warning: package 'DHARMa' was built under R version 4.2.3
-
-``` r
 library(gridExtra)
 library(emmeans)
-```
-
-    ## Warning: package 'emmeans' was built under R version 4.2.3
-
-``` r
 library(Hmisc)
-```
-
-    ## Warning: package 'Hmisc' was built under R version 4.2.3
-
-``` r
 library(corrplot)
 source("SVM_plot_fxns.R")
 ```
@@ -105,25 +70,11 @@ plot using function
 plot_ridgeline(with_self2, save = FALSE)
 ```
 
-    ## Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
-    ## ℹ Please use `linewidth` instead.
-    ## This warning is displayed once every 8 hours.
-    ## Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
-    ## generated.
-
     ## Picking joint bandwidth of 0.0453
 
-    ## Warning: Removed 38 rows containing non-finite values
-    ## (`stat_density_ridges()`).
-
-    ## Warning: Using the `size` aesthetic with geom_segment was deprecated in ggplot2 3.4.0.
-    ## ℹ Please use the `linewidth` aesthetic instead.
-    ## This warning is displayed once every 8 hours.
-    ## Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
-    ## generated.
-
 ![](SVM_plots_forpaper_markdown_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
-STAT TESTS for with self - self vs. partner vs. other GLM
+
+stats for with self - self vs. partner vs. other GLM
 
 ``` r
 with_self_stats <- GLM_SVM(with_self2)
@@ -138,15 +89,6 @@ widen dataframe
 with_self_wide <- widen_df_withself(with_self2)
 ```
 
-    ## Warning: Values from `Freq` are not uniquely identified; output will contain list-cols.
-    ## • Use `values_fn = list` to suppress this warning.
-    ## • Use `values_fn = {summary_fun}` to summarise duplicates.
-    ## • Use the following dplyr code to identify duplicates.
-    ##   {data} %>%
-    ##   dplyr::group_by(Var1, Cluster, group) %>%
-    ##   dplyr::summarise(n = dplyr::n(), .groups = "drop") %>%
-    ##   dplyr::filter(n > 1L)
-
 for excluding self:
 
 ``` r
@@ -155,6 +97,8 @@ exclude_self2 <- process_df_excludeself(exclude_self)
 
     ## `summarise()` has grouped output by 'Cluster'. You can override using the
     ## `.groups` argument.
+
+plot exclude self data
 
 ``` r
 plot_ridgeline(exclude_self2, save = FALSE)
@@ -179,35 +123,30 @@ exclude self wide
 exclude_self_wide <- widen_df_excludeself(exclude_self2)
 ```
 
-    ## Warning: Values from `Freq` are not uniquely identified; output will contain list-cols.
-    ## • Use `values_fn = list` to suppress this warning.
-    ## • Use `values_fn = {summary_fun}` to summarise duplicates.
-    ## • Use the following dplyr code to identify duplicates.
-    ##   {data} %>%
-    ##   dplyr::group_by(Var1, Cluster, group) %>%
-    ##   dplyr::summarise(n = dplyr::n(), .groups = "drop") %>%
-    ##   dplyr::filter(n > 1L)
-
 by pairing type - with self
 
 ``` r
 pair_types <- unique(data$pair_type)
 for (type in pair_types) {
+  print(type)
   plot_ridgeline(with_self2, grouping = "pair_type", save = FALSE)
 
 }
 ```
 
+    ## [1] "FM"
+
     ## Picking joint bandwidth of 0.0477
 
 ![](SVM_plots_forpaper_markdown_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
 
+    ## [1] "MM"
+
     ## Picking joint bandwidth of 0.0549
 
-    ## Warning: Removed 38 rows containing non-finite values
-    ## (`stat_density_ridges()`).
-
 ![](SVM_plots_forpaper_markdown_files/figure-gfm/unnamed-chunk-15-2.png)<!-- -->
+
+    ## [1] "FF"
 
     ## Picking joint bandwidth of 0.0623
 
@@ -217,18 +156,25 @@ by pair type without self
 ``` r
 pair_types <- unique(data$pair_type)
 for (type in pair_types) {
+  print(type)
   plot_ridgeline(exclude_self2, grouping = "pair_type", save = FALSE)
   
 }
 ```
 
+    ## [1] "FM"
+
     ## Picking joint bandwidth of 0.0527
 
 ![](SVM_plots_forpaper_markdown_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
 
+    ## [1] "MM"
+
     ## Picking joint bandwidth of 0.0699
 
 ![](SVM_plots_forpaper_markdown_files/figure-gfm/unnamed-chunk-16-2.png)<!-- -->
+
+    ## [1] "FF"
 
     ## Picking joint bandwidth of 0.0608
 
@@ -238,21 +184,25 @@ by cohort with self
 ``` r
 cohs <- unique(data$beh_cohort)
 for (type in cohs) {
+  print(type)
   plot_ridgeline(with_self2, grouping = "beh_cohort", save = FALSE)
   
 }
 ```
 
+    ## [1] 3
+
     ## Picking joint bandwidth of 0.0539
 
 ![](SVM_plots_forpaper_markdown_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
 
+    ## [1] 2
+
     ## Picking joint bandwidth of 0.0565
 
-    ## Warning: Removed 38 rows containing non-finite values
-    ## (`stat_density_ridges()`).
-
 ![](SVM_plots_forpaper_markdown_files/figure-gfm/unnamed-chunk-17-2.png)<!-- -->
+
+    ## [1] 4
 
     ## Picking joint bandwidth of 0.0504
 
@@ -262,18 +212,25 @@ by cohort exclude self
 ``` r
 cohs <- unique(data$beh_cohort)
 for (type in cohs) {
+  print(type)
   plot_ridgeline(exclude_self2, grouping = "beh_cohort", save = FALSE)
   
 }
 ```
 
+    ## [1] 3
+
     ## Picking joint bandwidth of 0.0698
 
 ![](SVM_plots_forpaper_markdown_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
 
+    ## [1] 2
+
     ## Picking joint bandwidth of 0.0637
 
 ![](SVM_plots_forpaper_markdown_files/figure-gfm/unnamed-chunk-18-2.png)<!-- -->
+
+    ## [1] 4
 
     ## Picking joint bandwidth of 0.0522
 
@@ -439,10 +396,6 @@ ggplot(summ_stats, aes(x = avg_cells_tested, y = mean_self_pct, color = Cluster)
 ```
 
     ## `geom_smooth()` using formula = 'y ~ x'
-
-    ## Warning: Removed 1 rows containing non-finite values (`stat_smooth()`).
-
-    ## Warning: Removed 1 rows containing missing values (`geom_point()`).
 
 ![](SVM_plots_forpaper_markdown_files/figure-gfm/unnamed-chunk-23-1.png)<!-- -->
 
