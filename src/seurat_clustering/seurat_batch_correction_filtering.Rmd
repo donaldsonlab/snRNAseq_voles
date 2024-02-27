@@ -1,12 +1,15 @@
 ---
 title: "Batch correction and choosing UMAP parameters"
-output: html_notebook
+author: "Liza Brusman"
+date: "2024-02-26"
+output: github_document
 ---
 
-This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
+```
 
-Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
-
+load packages
 ```{r, message=FALSE}
 #load packages
 library(dplyr)
@@ -19,12 +22,12 @@ library(ggpubr)
 ```
 
 import seurat object with all samples integrated
-```{r, message=FALSE}
+```{r, message=FALSE, eval=FALSE}
 SCT_norm <- readRDS("C:/Users/Liza/Desktop/seq_analysis/rccluster/SCT_integration_cluster/output/all_samples_integrated.rds")
 ```
 
 regress out sequencing cohort and behavior cohort effects
-```{r}
+```{r, eval=FALSE}
 #set default assay in Seurat object
 DefaultAssay(object = SCT_norm) <- "RNA"
 #remove any cells with >7500 counts (probably doublets)
@@ -34,14 +37,14 @@ SCT_norm <- SCTransform(SCT_norm, vars.to.regress = c("SeqCohort", "BehCohort"),
 ```
 
 save batch corrected seurat object
-```{r}
-setwd("seurat_clustering/output/")
+```{r, eval=FALSE}
+setwd("output/")
 saveRDS(SCT_norm, file = "SCT_nofilt.rds")
 ```
 
 then can read in that file if we don't want to do the batch correction part again
 ```{r}
-SCT_norm <- readRDS("seurat_clustering/output/SCT_nofilt.rds")
+SCT_norm <- readRDS("output/SCT_nofilt.rds")
 ```
 
 
@@ -56,11 +59,11 @@ find best number of PCs for UMAP and which clusters to remove
 ```{r}
 SCT_norm <- RunPCA(SCT_norm,npcs = 50)
 
-SCT_norm <- FindNeighbors(SCT_norm, reduction = "pca", dims = 1:30)#for original SCT_norm used 1:30
+SCT_norm <- FindNeighbors(SCT_norm, reduction = "pca", dims = 1:30)
 
-SCT_norm <- FindClusters(SCT_norm, resolution = 0.2) #0.12 looks good #orig SCT_norm used 0.2
+SCT_norm <- FindClusters(SCT_norm, resolution = 0.2) 
 
-SCT_norm <- RunUMAP(SCT_norm, reduction = "pca", dims = 1:30) #orig SCT_norm used 1:30
+SCT_norm <- RunUMAP(SCT_norm, reduction = "pca", dims = 1:30)
 
 ani.umap <- DimPlot(object = SCT_norm, reduction = "umap", label = TRUE, raster = FALSE) #+ scale_x_reverse() + scale_y_reverse()
 print(ani.umap)
@@ -68,8 +71,6 @@ print(ani.umap)
 umap.vln <- VlnPlot(SCT_norm, features=c("DRD1A", "DRD2", "Pdyn", "Aspa", "Sst", "Olig2", "Gja1", "Aif1", "Slc17a7", "Pecam1", "Trh"), pt.size = 0, combine = TRUE)
 print(umap.vln)
 
-# Idents(SCT_norm_reg) <- "seurat_clusters"
-# VlnPlot(SCT_norm, features = c("nFeature_SCT", "nCount_SCT"), ncol = 2, pt.size = 0, combine = TRUE, assay = "SCT", slot = "counts")
 ```
 take out clusters that have Slc17a7 (excitatory neurons - not NAc) or Pecam1 - endothelial cells
 ```{r}
@@ -145,7 +146,7 @@ SCT_norm$Group <- paste(SCT_norm$Sex, SCT_norm$SSOS, sep = "_")
 ```
 
 SAVE new RDS file of final Seurat object
-```{r}
+```{r, eval=FALSE}
 setwd("output/")
 saveRDS(SCT_norm, file = "SCT_norm.rds")
 ```

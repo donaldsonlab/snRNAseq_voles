@@ -1,13 +1,16 @@
 ---
 title: "UMAP Clustering and cell type proportions"
-output: html_notebook
+author: "Liza Brusman"
+date: "2024-02-26"
+output: github_document
 ---
 
-This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
 
-Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
+```
 
-```{r}
+```{r, message=FALSE}
 #load packages
 library(dplyr)
 library(tidyr)
@@ -48,19 +51,19 @@ Idents(SCT_norm) <- factor(Idents(SCT_norm),
 ani.umap <- DimPlot(object = SCT_norm, reduction = "umap", label = FALSE, cols = palette, raster = FALSE)
 print(ani.umap)
 
-setwd("output/")
-ggsave(
-  "umap_final.pdf",
-  plot = ani.umap,
-  device = pdf,
-  scale = 1,
-  width = 9.5,
-  height = 7,
-  units = c("in"),
-  dpi = 300,
-  limitsize = FALSE,
-  bg = "white"
-)
+# setwd("output/")
+# ggsave(
+#   "umap_final.pdf",
+#   plot = ani.umap,
+#   device = pdf,
+#   scale = 1,
+#   width = 9.5,
+#   height = 7,
+#   units = c("in"),
+#   dpi = 300,
+#   limitsize = FALSE,
+#   bg = "white"
+# )
 
 ```
 
@@ -79,39 +82,39 @@ DefaultAssay(SCT_norm) <- "SCT"
 
 markers.to.plot <- c("DRD1A", "DRD2", "Pdyn", "Penk", "Oprm1", "Igfbpl1", "Dlx2", "Sst", "Npy", "Vip", "Kit", "Chat", "Mog", "Olig2", "Pdgfra", "Gja1", "Aif1", "Vim", "Elavl2", "Gad1", "Syt1")
 
-#create dotplot with original colors
-dots <- DotPlot_scCustom(SCT_norm, features = markers.to.plot, dot.scale = 12, col.min=0, col.max=3, colors_use = viridis_plasma_light_high) + RotatedAxis()
-print(dots)
+# #create dotplot with original colors
+# dots <- DotPlot_scCustom(SCT_norm, features = markers.to.plot, dot.scale = 12, col.min=0, col.max=3, colors_use = viridis_plasma_light_high) + RotatedAxis()
+# print(dots)
 
 #create dotplot with new colors
 dots <- DotPlot(SCT_norm, features = markers.to.plot, dot.scale = 12, col.min=0, col.max=3, cols = c("whitesmoke", "black")) + 
     RotatedAxis()
 print(dots)
 
-setwd("output/")
-ggsave(
-  "dotplot_black.pdf",
-  plot = dots,
-  device = pdf,
-  scale = 1,
-  width = 12,
-  height = 8,
-  units = c("in"),
-  dpi = 300,
-  limitsize = TRUE,
-  bg = "white"
-)
+# setwd("output/")
+# ggsave(
+#   "dotplot_black.pdf",
+#   plot = dots,
+#   device = pdf,
+#   scale = 1,
+#   width = 12,
+#   height = 8,
+#   units = c("in"),
+#   dpi = 300,
+#   limitsize = TRUE,
+#   bg = "white"
+# )
 ```
 
 get top marker genes for each cluster
-```{r}
+```{r, eval=FALSE}
 #find all markers
 Idents(SCT_norm) <- "new_clusts"
 markers <- FindAllMarkers(SCT_norm, only.pos=TRUE, min.pct=0.25, logfc.threshold=0.25)
 markers <- markers %>% group_by(cluster) %>% arrange(desc(avg_log2FC), .by_group=TRUE)
 
-setwd("output/")
-write.csv(markers, "SCT_norm_markers.csv")
+# setwd("output/")
+# write.csv(markers, "SCT_norm_markers.csv")
 ```
 
 read in markers
@@ -142,19 +145,19 @@ heat <- DoHeatmap(SCT_norm, features = top10$gene, group.colors = palette) + NoL
 
 print(heat)
 
-setwd("output/")
-ggsave(
-  "heatmap.png",
-  plot = heat,
-  device = png,
-  scale = 1,
-  width = 12,
-  height = 8,
-  units = c("in"),
-  dpi = 300,
-  limitsize = TRUE,
-  bg = "white"
-)
+# setwd("output/")
+# ggsave(
+#   "heatmap.png",
+#   plot = heat,
+#   device = png,
+#   scale = 1,
+#   width = 12,
+#   height = 8,
+#   units = c("in"),
+#   dpi = 300,
+#   limitsize = TRUE,
+#   bg = "white"
+# )
 ```
 
 
@@ -198,7 +201,7 @@ dev.off()
 ```
 import metadata
 ```{r}
-metadata <- read.csv("../docs/seq_beh_metadata.csv")
+metadata <- read.csv("../../docs/seq_beh_metadata.csv")
 
 ```
 
@@ -252,9 +255,9 @@ for (clust in order) {
 
   
   # fname_pdf <- paste(clust, "props_violin.pdf", sep ="_")
-  fname_png <- paste(clust, "props_violin.png", sep ="_")
+  # fname_png <- paste(clust, "props_violin.png", sep ="_")
   # ggsave(fname_pdf, p, height = 8, width = 10, units = "in", device = pdf)
-  ggsave(fname_png, p, bg = "white", height = 8, width = 10, units = "in", device = png)
+  # ggsave(fname_png, p, bg = "white", height = 8, width = 10, units = "in", device = png)
   }
 
 
@@ -297,11 +300,11 @@ for (clust in order) {
 all_plt <- grid.arrange(grobs = plt_list, nrow = 3)
 all_plt
 
-setwd("output/")
-ggsave("all_cluster_props_violins.pdf", all_plt, width = 16, height = 8, units = "in")
+# setwd("output/")
+# ggsave("all_cluster_props_violins.pdf", all_plt, width = 16, height = 8, units = "in")
 ```
 do stats on violin plots
-```{r}
+```{r, eval=FALSE}
 props_perani_wide <- props_perani %>% pivot_wider(id_cols = c("animal", "sex", "SS_OS"), names_from = "Var1", values_from = "Freq")
 all_contrasts <- data.frame(contrast = character(), 
                             estimate = numeric(), 
@@ -316,13 +319,13 @@ for (clust in order) {
   fit <- glmmTMB(form, data = props_perani_wide)
   print(summary(fit))
   
-  simres <- simulateResiduals(fit)
-  plot(simres, title = clust)
+  # simres <- simulateResiduals(fit)
+  # plot(simres, title = clust)
   
   EMM <- emmeans(fit, ~ sex*SS_OS)
   # print(summary(pairwise_comparisons))
   coef <- contrast(EMM, "pairwise")[c(1, 2, 5, 6)]
-  coef2 <- summary(coef, adjust = "fdr") #[["sex*SSOS"]])
+  coef2 <- summary(coef, adjust = "fdr")
   print(coef2)
   mini.df <- coef2 %>% as.data.frame()
   mini.df$Cluster <- clust
