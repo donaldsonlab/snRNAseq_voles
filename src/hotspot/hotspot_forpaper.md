@@ -27,32 +27,15 @@ suppressPackageStartupMessages(library(ggpubr))
 suppressPackageStartupMessages(library(ComplexHeatmap))
 library(glmmTMB)
 library(DHARMa)
-```
-
-    ## This is DHARMa 0.4.6. For overview type '?DHARMa'. For recent changes, type news(package = 'DHARMa')
-
-``` r
 library(emmeans)
 library(Seurat)
-```
-
-    ## Attaching SeuratObject
-
-    ## 
-    ## Attaching package: 'Seurat'
-
-    ## The following object is masked from 'package:Hmisc':
-    ## 
-    ##     Key
-
-``` r
 source("hotspot.R")
 ```
 
 import module data and metadata
 
 ``` r
-all_cells <- read.csv("docs/ani_mod_scores_allcells.csv")
+all_cells <- read.csv("docs/ani_mod_scores_allcells_lognorm_counts.csv") %>% filter(animal != "4967")
 
 metadata <- read.csv("../../docs/seq_beh_metadata.csv") %>% process_metadata() %>% group_level()
 ```
@@ -100,8 +83,8 @@ for (mod in "Module.6") {
 }
 ```
 
-    ## [1] 0.16724
-    ## [1] 0.2423802
+    ## [1] 0.09520588
+    ## [1] 0.1290499
 
     ## `geom_smooth()` using formula = 'y ~ x'
 
@@ -113,8 +96,8 @@ for (mod in "Module.11") {
 }
 ```
 
-    ## [1] 0.06466089
-    ## [1] 0.09716929
+    ## [1] 0.04101589
+    ## [1] 0.05913558
 
     ## `geom_smooth()` using formula = 'y ~ x'
 
@@ -573,24 +556,24 @@ for (mod in modules) {
     ## Data: merged_data
     ## 
     ##      AIC      BIC   logLik deviance df.resid 
-    ##   -212.4   -204.1    111.2   -222.4       34 
+    ##   -289.2   -280.9    149.6   -299.2       34 
     ## 
     ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 0.000195 
+    ## Dispersion estimate for gaussian family (sigma^2): 2.73e-05 
     ## 
     ## Conditional model:
-    ##               Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)   0.081446   0.004215  19.322  < 2e-16 ***
-    ## sexM          0.001096   0.006108   0.179  0.85761    
-    ## SS_OSSS       0.016741   0.006496   2.577  0.00996 ** 
-    ## sexM:SS_OSSS -0.017098   0.009016  -1.896  0.05790 .  
+    ##                Estimate Std. Error z value Pr(>|z|)    
+    ## (Intercept)   0.0436022  0.0015742  27.698   <2e-16 ***
+    ## sexM          0.0004203  0.0022812   0.184   0.8538    
+    ## SS_OSSS       0.0056711  0.0024260   2.338   0.0194 *  
+    ## sexM:SS_OSSS -0.0065816  0.0033671  -1.955   0.0506 .  
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ##  contrast     estimate      SE df t.ratio p.value
-    ##  F OS - M OS -0.001096 0.00611 34  -0.179  0.9548
-    ##  F OS - F SS -0.016741 0.00650 34  -2.577  0.0427
-    ##  M OS - M SS  0.000357 0.00625 34   0.057  0.9548
-    ##  F SS - M SS  0.016002 0.00663 34   2.413  0.0427
+    ##  F OS - M OS -0.000420 0.00228 34  -0.184  0.8549
+    ##  F OS - F SS -0.005671 0.00243 34  -2.338  0.0509
+    ##  M OS - M SS  0.000911 0.00233 34   0.390  0.8549
+    ##  F SS - M SS  0.006161 0.00248 34   2.488  0.0509
     ## 
     ## P value adjustment: fdr method for 4 tests 
     ##  Family: gaussian  ( identity )
@@ -598,24 +581,24 @@ for (mod in modules) {
     ## Data: merged_data
     ## 
     ##      AIC      BIC   logLik deviance df.resid 
-    ##   -178.3   -170.0     94.2   -188.3       34 
+    ##   -249.8   -241.5    129.9   -259.8       34 
     ## 
     ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 0.000468 
+    ## Dispersion estimate for gaussian family (sigma^2): 7.49e-05 
     ## 
     ## Conditional model:
     ##               Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)   0.201656   0.006522  30.918   <2e-16 ***
-    ## sexM          0.007315   0.009452   0.774   0.4390    
-    ## SS_OSSS       0.024026   0.010052   2.390   0.0168 *  
-    ## sexM:SS_OSSS -0.025931   0.013951  -1.859   0.0631 .  
+    ## (Intercept)   0.102433   0.002610   39.25   <2e-16 ***
+    ## sexM          0.002594   0.003782    0.69   0.4928    
+    ## SS_OSSS       0.008858   0.004022    2.20   0.0276 *  
+    ## sexM:SS_OSSS -0.010665   0.005582   -1.91   0.0560 .  
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ##  contrast    estimate      SE df t.ratio p.value
-    ##  F OS - M OS -0.00731 0.00945 34  -0.774  0.5925
-    ##  F OS - F SS -0.02403 0.01005 34  -2.390  0.0901
-    ##  M OS - M SS  0.00190 0.00967 34   0.197  0.8451
-    ##  F SS - M SS  0.01862 0.01026 34   1.814  0.1569
+    ##  F OS - M OS -0.00259 0.00378 34  -0.686  0.6436
+    ##  F OS - F SS -0.00886 0.00402 34  -2.203  0.1150
+    ##  M OS - M SS  0.00181 0.00387 34   0.467  0.6436
+    ##  F SS - M SS  0.00807 0.00411 34   1.966  0.1150
     ## 
     ## P value adjustment: fdr method for 4 tests 
     ##  Family: gaussian  ( identity )
@@ -623,24 +606,24 @@ for (mod in modules) {
     ## Data: merged_data
     ## 
     ##      AIC      BIC   logLik deviance df.resid 
-    ##   -146.7   -138.3     78.3   -156.7       34 
+    ##   -224.1   -215.8    117.1   -234.1       34 
     ## 
     ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 0.00105 
+    ## Dispersion estimate for gaussian family (sigma^2): 0.000145 
     ## 
     ## Conditional model:
     ##               Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)   0.199427   0.009791  20.369   <2e-16 ***
-    ## sexM          0.004114   0.014188   0.290   0.7718    
-    ## SS_OSSS       0.028991   0.015088   1.921   0.0547 .  
-    ## sexM:SS_OSSS -0.021616   0.020941  -1.032   0.3020    
+    ## (Intercept)   0.101262   0.003627  27.921   <2e-16 ***
+    ## sexM          0.001218   0.005256   0.232   0.8168    
+    ## SS_OSSS       0.010489   0.005589   1.877   0.0606 .  
+    ## sexM:SS_OSSS -0.009196   0.007757  -1.185   0.2358    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ##  contrast    estimate     SE df t.ratio p.value
-    ##  F OS - M OS -0.00411 0.0142 34  -0.290  0.7736
-    ##  F OS - F SS -0.02899 0.0151 34  -1.921  0.2524
-    ##  M OS - M SS -0.00737 0.0145 34  -0.508  0.7736
-    ##  F SS - M SS  0.01750 0.0154 34   1.136  0.5275
+    ##  contrast    estimate      SE df t.ratio p.value
+    ##  F OS - M OS -0.00122 0.00526 34  -0.232  0.8181
+    ##  F OS - F SS -0.01049 0.00559 34  -1.877  0.2767
+    ##  M OS - M SS -0.00129 0.00538 34  -0.240  0.8181
+    ##  F SS - M SS  0.00798 0.00571 34   1.398  0.3421
     ## 
     ## P value adjustment: fdr method for 4 tests 
     ##  Family: gaussian  ( identity )
@@ -648,24 +631,24 @@ for (mod in modules) {
     ## Data: merged_data
     ## 
     ##      AIC      BIC   logLik deviance df.resid 
-    ##   -379.6   -371.3    194.8   -389.6       34 
+    ##   -423.1   -414.8    216.6   -433.1       34 
     ## 
     ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 2.68e-06 
+    ## Dispersion estimate for gaussian family (sigma^2): 8.79e-07 
     ## 
     ## Conditional model:
     ##                Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)   0.0079929  0.0004940  16.179   <2e-16 ***
-    ## sexM         -0.0003581  0.0007159  -0.500   0.6169    
-    ## SS_OSSS       0.0017628  0.0007613   2.315   0.0206 *  
-    ## sexM:SS_OSSS -0.0013690  0.0010567  -1.296   0.1951    
+    ## (Intercept)   0.0051163  0.0002827  18.097   <2e-16 ***
+    ## sexM         -0.0002086  0.0004097  -0.509   0.6107    
+    ## SS_OSSS       0.0010634  0.0004357   2.441   0.0147 *  
+    ## sexM:SS_OSSS -0.0008368  0.0006047  -1.384   0.1664    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ##  contrast     estimate       SE df t.ratio p.value
-    ##  F OS - M OS  0.000358 0.000716 34   0.500  0.6201
-    ##  F OS - F SS -0.001763 0.000761 34  -2.315  0.0661
-    ##  M OS - M SS -0.000394 0.000733 34  -0.537  0.6201
-    ##  F SS - M SS  0.001727 0.000777 34   2.222  0.0661
+    ##  F OS - M OS  0.000209 0.000410 34   0.509  0.6140
+    ##  F OS - F SS -0.001063 0.000436 34  -2.441  0.0494
+    ##  M OS - M SS -0.000227 0.000419 34  -0.540  0.6140
+    ##  F SS - M SS  0.001045 0.000445 34   2.350  0.0494
     ## 
     ## P value adjustment: fdr method for 4 tests 
     ##  Family: gaussian  ( identity )
@@ -673,24 +656,24 @@ for (mod in modules) {
     ## Data: merged_data
     ## 
     ##      AIC      BIC   logLik deviance df.resid 
-    ##   -340.0   -331.7    175.0   -350.0       34 
+    ##   -385.6   -377.2    197.8   -395.6       34 
     ## 
     ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 7.41e-06 
+    ## Dispersion estimate for gaussian family (sigma^2): 2.31e-06 
     ## 
     ## Conditional model:
     ##                Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)   1.682e-02  8.206e-04  20.496  < 2e-16 ***
-    ## sexM         -1.147e-05  1.189e-03  -0.010  0.99231    
-    ## SS_OSSS       3.384e-03  1.265e-03   2.676  0.00745 ** 
-    ## sexM:SS_OSSS -3.551e-03  1.755e-03  -2.023  0.04303 *  
+    ## (Intercept)   1.046e-02  4.578e-04  22.844  < 2e-16 ***
+    ## sexM         -3.321e-05  6.634e-04  -0.050  0.96007    
+    ## SS_OSSS       1.911e-03  7.055e-04   2.709  0.00674 ** 
+    ## sexM:SS_OSSS -2.011e-03  9.791e-04  -2.054  0.03999 *  
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ##  contrast     estimate      SE df t.ratio p.value
-    ##  F OS - M OS  1.15e-05 0.00119 34   0.010  0.9924
-    ##  F OS - F SS -3.38e-03 0.00126 34  -2.676  0.0227
-    ##  M OS - M SS  1.67e-04 0.00122 34   0.137  0.9924
-    ##  F SS - M SS  3.56e-03 0.00129 34   2.760  0.0227
+    ##  contrast     estimate       SE df t.ratio p.value
+    ##  F OS - M OS  3.32e-05 0.000663 34   0.050  0.9604
+    ##  F OS - F SS -1.91e-03 0.000705 34  -2.709  0.0210
+    ##  M OS - M SS  9.97e-05 0.000679 34   0.147  0.9604
+    ##  F SS - M SS  2.04e-03 0.000720 34   2.839  0.0210
     ## 
     ## P value adjustment: fdr method for 4 tests 
     ##  Family: gaussian  ( identity )
@@ -698,24 +681,24 @@ for (mod in modules) {
     ## Data: merged_data
     ## 
     ##      AIC      BIC   logLik deviance df.resid 
-    ##   -192.3   -184.0    101.2   -202.3       34 
+    ##   -256.7   -248.3    133.3   -266.7       34 
     ## 
     ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 0.000327 
+    ## Dispersion estimate for gaussian family (sigma^2): 6.28e-05 
     ## 
     ## Conditional model:
-    ##               Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)   0.210367   0.005451   38.60   <2e-16 ***
-    ## sexM         -0.001195   0.007899   -0.15    0.880    
-    ## SS_OSSS       0.001385   0.008400    0.16    0.869    
-    ## sexM:SS_OSSS -0.001251   0.011658   -0.11    0.915    
+    ##                Estimate Std. Error z value Pr(>|z|)    
+    ## (Intercept)   0.1146339  0.0023898   47.97   <2e-16 ***
+    ## sexM         -0.0006935  0.0034632   -0.20    0.841    
+    ## SS_OSSS       0.0005805  0.0036830    0.16    0.875    
+    ## sexM:SS_OSSS -0.0012341  0.0051117   -0.24    0.809    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ##  contrast     estimate      SE df t.ratio p.value
-    ##  F OS - M OS  0.001195 0.00790 34   0.151  0.9869
-    ##  F OS - F SS -0.001385 0.00840 34  -0.165  0.9869
-    ##  M OS - M SS -0.000134 0.00808 34  -0.017  0.9869
-    ##  F SS - M SS  0.002446 0.00857 34   0.285  0.9869
+    ##  F OS - M OS  0.000693 0.00346 34   0.200  0.8757
+    ##  F OS - F SS -0.000580 0.00368 34  -0.158  0.8757
+    ##  M OS - M SS  0.000654 0.00354 34   0.184  0.8757
+    ##  F SS - M SS  0.001928 0.00376 34   0.513  0.8757
     ## 
     ## P value adjustment: fdr method for 4 tests 
     ##  Family: gaussian  ( identity )
@@ -723,24 +706,24 @@ for (mod in modules) {
     ## Data: merged_data
     ## 
     ##      AIC      BIC   logLik deviance df.resid 
-    ##   -104.0    -95.7     57.0   -114.0       34 
+    ##   -154.5   -146.2     82.3   -164.5       34 
     ## 
     ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 0.00315 
+    ## Dispersion estimate for gaussian family (sigma^2): 0.000862 
     ## 
     ## Conditional model:
-    ##              Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)   0.51624    0.01692  30.512   <2e-16 ***
-    ## sexM         -0.01077    0.02452  -0.439   0.6604    
-    ## SS_OSSS      -0.06267    0.02607  -2.404   0.0162 *  
-    ## sexM:SS_OSSS  0.05220    0.03619   1.442   0.1492    
+    ##               Estimate Std. Error z value Pr(>|z|)    
+    ## (Intercept)   0.281123   0.008854   31.75   <2e-16 ***
+    ## sexM         -0.005742   0.012831   -0.45   0.6545    
+    ## SS_OSSS      -0.033291   0.013645   -2.44   0.0147 *  
+    ## sexM:SS_OSSS  0.026859   0.018938    1.42   0.1561    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ##  contrast    estimate     SE df t.ratio p.value
-    ##  F OS - M OS   0.0108 0.0245 34   0.439  0.6790
-    ##  F OS - F SS   0.0627 0.0261 34   2.404  0.0873
-    ##  M OS - M SS   0.0105 0.0251 34   0.417  0.6790
-    ##  F SS - M SS  -0.0414 0.0266 34  -1.556  0.2578
+    ##  F OS - M OS  0.00574 0.0128 34   0.448  0.6573
+    ##  F OS - F SS  0.03329 0.0136 34   2.440  0.0802
+    ##  M OS - M SS  0.00643 0.0131 34   0.490  0.6573
+    ##  F SS - M SS -0.02112 0.0139 34  -1.516  0.2775
     ## 
     ## P value adjustment: fdr method for 4 tests 
     ##  Family: gaussian  ( identity )
@@ -748,24 +731,24 @@ for (mod in modules) {
     ## Data: merged_data
     ## 
     ##      AIC      BIC   logLik deviance df.resid 
-    ##    -73.1    -64.8     41.6    -83.1       34 
+    ##   -132.8   -124.5     71.4   -142.8       34 
     ## 
     ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 0.00695 
+    ## Dispersion estimate for gaussian family (sigma^2): 0.0015 
     ## 
     ## Conditional model:
-    ##              Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)   0.66845    0.02513  26.600   <2e-16 ***
-    ## sexM          0.01100    0.03642   0.302    0.763    
-    ## SS_OSSS      -0.02740    0.03873  -0.707    0.479    
-    ## sexM:SS_OSSS  0.03223    0.05375   0.600    0.549    
+    ##               Estimate Std. Error z value Pr(>|z|)    
+    ## (Intercept)   0.354680   0.011695  30.328   <2e-16 ***
+    ## sexM          0.002952   0.016948   0.174    0.862    
+    ## SS_OSSS      -0.017782   0.018023  -0.987    0.324    
+    ## sexM:SS_OSSS  0.018072   0.025015   0.722    0.470    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ##  contrast    estimate     SE df t.ratio p.value
-    ##  F OS - M OS -0.01100 0.0364 34  -0.302  0.8976
-    ##  F OS - F SS  0.02740 0.0387 34   0.707  0.8976
-    ##  M OS - M SS -0.00483 0.0373 34  -0.130  0.8976
-    ##  F SS - M SS -0.04323 0.0395 34  -1.093  0.8976
+    ##  F OS - M OS -0.00295 0.0169 34  -0.174  0.9867
+    ##  F OS - F SS  0.01778 0.0180 34   0.987  0.6616
+    ##  M OS - M SS -0.00029 0.0173 34  -0.017  0.9867
+    ##  F SS - M SS -0.02102 0.0184 34  -1.143  0.6616
     ## 
     ## P value adjustment: fdr method for 4 tests 
     ##  Family: gaussian  ( identity )
@@ -773,24 +756,24 @@ for (mod in modules) {
     ## Data: merged_data
     ## 
     ##      AIC      BIC   logLik deviance df.resid 
-    ##    -86.3    -78.0     48.1    -96.3       34 
+    ##   -143.8   -135.5     76.9   -153.8       34 
     ## 
     ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 0.00496 
+    ## Dispersion estimate for gaussian family (sigma^2): 0.00113 
     ## 
     ## Conditional model:
     ##               Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)   0.528418   0.021230  24.890   <2e-16 ***
-    ## sexM         -0.028824   0.030765  -0.937    0.349    
-    ## SS_OSSS      -0.003484   0.032718  -0.106    0.915    
-    ## sexM:SS_OSSS  0.013404   0.045410   0.295    0.768    
+    ## (Intercept)   0.295001   0.010152  29.057   <2e-16 ***
+    ## sexM         -0.014869   0.014712  -1.011    0.312    
+    ## SS_OSSS      -0.005510   0.015646  -0.352    0.725    
+    ## sexM:SS_OSSS  0.009382   0.021715   0.432    0.666    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ##  contrast    estimate     SE df t.ratio p.value
-    ##  F OS - M OS  0.02882 0.0308 34   0.937  0.9158
-    ##  F OS - F SS  0.00348 0.0327 34   0.106  0.9158
-    ##  M OS - M SS -0.00992 0.0315 34  -0.315  0.9158
-    ##  F SS - M SS  0.01542 0.0334 34   0.462  0.9158
+    ##  F OS - M OS  0.01487 0.0147 34   1.011  0.7986
+    ##  F OS - F SS  0.00551 0.0156 34   0.352  0.7986
+    ##  M OS - M SS -0.00387 0.0151 34  -0.257  0.7986
+    ##  F SS - M SS  0.00549 0.0160 34   0.344  0.7986
     ## 
     ## P value adjustment: fdr method for 4 tests 
     ##  Family: gaussian  ( identity )
@@ -798,24 +781,24 @@ for (mod in modules) {
     ## Data: merged_data
     ## 
     ##      AIC      BIC   logLik deviance df.resid 
-    ##   -322.4   -314.1    166.2   -332.4       34 
+    ##   -373.3   -365.0    191.6   -383.3       34 
     ## 
     ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 1.16e-05 
+    ## Dispersion estimate for gaussian family (sigma^2): 3.16e-06 
     ## 
     ## Conditional model:
     ##                Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)   0.0309376  0.0010286  30.078   <2e-16 ***
-    ## sexM          0.0001205  0.0014906   0.081   0.9356    
-    ## SS_OSSS       0.0030920  0.0015852   1.951   0.0511 .  
-    ## sexM:SS_OSSS -0.0031705  0.0022001  -1.441   0.1496    
+    ## (Intercept)   0.0186482  0.0005358   34.80   <2e-16 ***
+    ## sexM          0.0000994  0.0007764    0.13    0.898    
+    ## SS_OSSS       0.0016255  0.0008257    1.97    0.049 *  
+    ## sexM:SS_OSSS -0.0018030  0.0011460   -1.57    0.116    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ##  contrast     estimate      SE df t.ratio p.value
-    ##  F OS - M OS -1.21e-04 0.00149 34  -0.081  0.9593
-    ##  F OS - F SS -3.09e-03 0.00159 34  -1.951  0.1360
-    ##  M OS - M SS  7.85e-05 0.00153 34   0.051  0.9593
-    ##  F SS - M SS  3.05e-03 0.00162 34   1.885  0.1360
+    ##  contrast     estimate       SE df t.ratio p.value
+    ##  F OS - M OS -9.94e-05 0.000776 34  -0.128  0.8989
+    ##  F OS - F SS -1.63e-03 0.000826 34  -1.969  0.1144
+    ##  M OS - M SS  1.78e-04 0.000795 34   0.223  0.8989
+    ##  F SS - M SS  1.70e-03 0.000843 34   2.021  0.1144
     ## 
     ## P value adjustment: fdr method for 4 tests 
     ##  Family: gaussian  ( identity )
@@ -823,24 +806,24 @@ for (mod in modules) {
     ## Data: merged_data
     ## 
     ##      AIC      BIC   logLik deviance df.resid 
-    ##   -280.0   -271.7    145.0   -290.0       34 
+    ##   -323.0   -314.7    166.5   -333.0       34 
     ## 
     ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 3.45e-05 
+    ## Dispersion estimate for gaussian family (sigma^2): 1.15e-05 
     ## 
     ## Conditional model:
     ##                Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)   0.0808045  0.0017717   45.61   <2e-16 ***
-    ## sexM          0.0040286  0.0025674    1.57    0.117    
-    ## SS_OSSS      -0.0007552  0.0027304   -0.28    0.782    
-    ## sexM:SS_OSSS  0.0008420  0.0037895    0.22    0.824    
+    ## (Intercept)   0.0503157  0.0010210   49.28   <2e-16 ***
+    ## sexM          0.0022806  0.0014796    1.54    0.123    
+    ## SS_OSSS      -0.0007644  0.0015735   -0.49    0.627    
+    ## sexM:SS_OSSS  0.0005658  0.0021839    0.26    0.796    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ##  contrast     estimate      SE df t.ratio p.value
-    ##  F OS - M OS -4.03e-03 0.00257 34  -1.569  0.2518
-    ##  F OS - F SS  7.55e-04 0.00273 34   0.277  0.9738
-    ##  M OS - M SS -8.69e-05 0.00263 34  -0.033  0.9738
-    ##  F SS - M SS -4.87e-03 0.00279 34  -1.747  0.2518
+    ##  F OS - M OS -0.002281 0.00148 34  -1.541  0.2650
+    ##  F OS - F SS  0.000764 0.00157 34   0.486  0.8403
+    ##  M OS - M SS  0.000199 0.00151 34   0.131  0.8964
+    ##  F SS - M SS -0.002846 0.00161 34  -1.772  0.2650
     ## 
     ## P value adjustment: fdr method for 4 tests 
     ##  Family: gaussian  ( identity )
@@ -848,24 +831,24 @@ for (mod in modules) {
     ## Data: merged_data
     ## 
     ##      AIC      BIC   logLik deviance df.resid 
-    ##   -202.1   -193.8    106.1   -212.1       34 
+    ##   -255.7   -247.4    132.8   -265.7       34 
     ## 
     ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 0.000254 
+    ## Dispersion estimate for gaussian family (sigma^2): 6.44e-05 
     ## 
     ## Conditional model:
     ##               Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)   0.125659   0.004809  26.130   <2e-16 ***
-    ## sexM         -0.001832   0.006969  -0.263   0.7927    
-    ## SS_OSSS       0.018371   0.007411   2.479   0.0132 *  
-    ## sexM:SS_OSSS -0.019426   0.010286  -1.889   0.0589 .  
+    ## (Intercept)   0.075745   0.002420  31.302   <2e-16 ***
+    ## sexM         -0.001006   0.003507  -0.287   0.7743    
+    ## SS_OSSS       0.009415   0.003729   2.525   0.0116 *  
+    ## sexM:SS_OSSS -0.010199   0.005176  -1.971   0.0488 *  
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ##  contrast    estimate      SE df t.ratio p.value
-    ##  F OS - M OS  0.00183 0.00697 34   0.263  0.8833
-    ##  F OS - F SS -0.01837 0.00741 34  -2.479  0.0366
-    ##  M OS - M SS  0.00106 0.00713 34   0.148  0.8833
-    ##  F SS - M SS  0.02126 0.00757 34   2.810  0.0326
+    ##  contrast     estimate      SE df t.ratio p.value
+    ##  F OS - M OS  0.001006 0.00351 34   0.287  0.8283
+    ##  F OS - F SS -0.009415 0.00373 34  -2.525  0.0328
+    ##  M OS - M SS  0.000785 0.00359 34   0.219  0.8283
+    ##  F SS - M SS  0.011205 0.00381 34   2.943  0.0233
     ## 
     ## P value adjustment: fdr method for 4 tests 
     ##  Family: gaussian  ( identity )
@@ -873,24 +856,24 @@ for (mod in modules) {
     ## Data: merged_data
     ## 
     ##      AIC      BIC   logLik deviance df.resid 
-    ##   -323.5   -315.2    166.8   -333.5       34 
+    ##   -368.9   -360.6    189.4   -378.9       34 
     ## 
     ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 1.13e-05 
+    ## Dispersion estimate for gaussian family (sigma^2): 3.54e-06 
     ## 
     ## Conditional model:
     ##                Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)   0.0337061  0.0010142   33.24   <2e-16 ***
-    ## sexM          0.0016985  0.0014697    1.16    0.248    
-    ## SS_OSSS       0.0005127  0.0015629    0.33    0.743    
-    ## sexM:SS_OSSS -0.0011537  0.0021692   -0.53    0.595    
+    ## (Intercept)   0.0206036  0.0005669   36.34   <2e-16 ***
+    ## sexM          0.0010203  0.0008216    1.24    0.214    
+    ## SS_OSSS       0.0003053  0.0008737    0.35    0.727    
+    ## sexM:SS_OSSS -0.0007401  0.0012126   -0.61    0.542    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ##  contrast     estimate      SE df t.ratio p.value
-    ##  F OS - M OS -0.001698 0.00147 34  -1.156  0.7449
-    ##  F OS - F SS -0.000513 0.00156 34  -0.328  0.7449
-    ##  M OS - M SS  0.000641 0.00150 34   0.426  0.7449
-    ##  F SS - M SS -0.000545 0.00160 34  -0.341  0.7449
+    ##  contrast     estimate       SE df t.ratio p.value
+    ##  F OS - M OS -0.001020 0.000822 34  -1.242  0.7553
+    ##  F OS - F SS -0.000305 0.000874 34  -0.349  0.7553
+    ##  M OS - M SS  0.000435 0.000841 34   0.517  0.7553
+    ##  F SS - M SS -0.000280 0.000892 34  -0.314  0.7553
     ## 
     ## P value adjustment: fdr method for 4 tests 
     ##  Family: gaussian  ( identity )
@@ -898,24 +881,24 @@ for (mod in modules) {
     ## Data: merged_data
     ## 
     ##      AIC      BIC   logLik deviance df.resid 
-    ##   -151.8   -143.5     80.9   -161.8       34 
+    ##   -198.7   -190.4    104.4   -208.7       34 
     ## 
     ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 0.000923 
+    ## Dispersion estimate for gaussian family (sigma^2): 0.000278 
     ## 
     ## Conditional model:
     ##               Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)   0.299414   0.009161   32.68   <2e-16 ***
-    ## sexM         -0.010365   0.013275   -0.78   0.4349    
-    ## SS_OSSS      -0.036045   0.014118   -2.55   0.0107 *  
-    ## sexM:SS_OSSS  0.031140   0.019594    1.59   0.1120    
+    ## (Intercept)   0.170615   0.005023   33.97   <2e-16 ***
+    ## sexM         -0.005597   0.007279   -0.77   0.4420    
+    ## SS_OSSS      -0.019172   0.007741   -2.48   0.0133 *  
+    ## sexM:SS_OSSS  0.015817   0.010744    1.47   0.1410    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ##  contrast    estimate     SE df t.ratio p.value
-    ##  F OS - M OS  0.01037 0.0133 34   0.781  0.5871
-    ##  F OS - F SS  0.03605 0.0141 34   2.553  0.0613
-    ##  M OS - M SS  0.00491 0.0136 34   0.361  0.7203
-    ##  F SS - M SS -0.02077 0.0144 34  -1.442  0.3172
+    ##  contrast    estimate      SE df t.ratio p.value
+    ##  F OS - M OS  0.00560 0.00728 34   0.769  0.5964
+    ##  F OS - F SS  0.01917 0.00774 34   2.477  0.0736
+    ##  M OS - M SS  0.00336 0.00745 34   0.450  0.6553
+    ##  F SS - M SS -0.01022 0.00790 34  -1.293  0.4092
     ## 
     ## P value adjustment: fdr method for 4 tests 
     ##  Family: gaussian  ( identity )
@@ -923,24 +906,24 @@ for (mod in modules) {
     ## Data: merged_data
     ## 
     ##      AIC      BIC   logLik deviance df.resid 
-    ##    -73.9    -65.6     41.9    -83.9       34 
+    ##   -137.8   -129.5     73.9   -147.8       34 
     ## 
     ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 0.00682 
+    ## Dispersion estimate for gaussian family (sigma^2): 0.00132 
     ## 
     ## Conditional model:
-    ##              Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)   0.55098    0.02489  22.134   <2e-16 ***
-    ## sexM         -0.01266    0.03607  -0.351    0.726    
-    ## SS_OSSS       0.05749    0.03836   1.499    0.134    
-    ## sexM:SS_OSSS -0.03723    0.05324  -0.699    0.484    
+    ##               Estimate Std. Error z value Pr(>|z|)    
+    ## (Intercept)   0.293517   0.010961  26.778   <2e-16 ***
+    ## sexM         -0.005133   0.015884  -0.323    0.747    
+    ## SS_OSSS       0.020112   0.016892   1.191    0.234    
+    ## sexM:SS_OSSS -0.013145   0.023445  -0.561    0.575    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ##  contrast    estimate     SE df t.ratio p.value
-    ##  F OS - M OS   0.0127 0.0361 34   0.351  0.7277
-    ##  F OS - F SS  -0.0575 0.0384 34  -1.499  0.4226
-    ##  M OS - M SS  -0.0203 0.0369 34  -0.549  0.7277
-    ##  F SS - M SS   0.0499 0.0392 34   1.274  0.4226
+    ##  F OS - M OS  0.00513 0.0159 34   0.323  0.7485
+    ##  F OS - F SS -0.02011 0.0169 34  -1.191  0.5933
+    ##  M OS - M SS -0.00697 0.0163 34  -0.429  0.7485
+    ##  F SS - M SS  0.01828 0.0172 34   1.060  0.5933
     ## 
     ## P value adjustment: fdr method for 4 tests 
     ##  Family: gaussian  ( identity )
@@ -948,24 +931,24 @@ for (mod in modules) {
     ## Data: merged_data
     ## 
     ##      AIC      BIC   logLik deviance df.resid 
-    ##   -273.5   -265.2    141.8   -283.5       34 
+    ##   -320.2   -311.8    165.1   -330.2       34 
     ## 
     ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 4.07e-05 
+    ## Dispersion estimate for gaussian family (sigma^2): 1.23e-05 
     ## 
     ## Conditional model:
     ##                Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)   0.0955266  0.0019246   49.64   <2e-16 ***
-    ## sexM         -0.0001027  0.0027890   -0.04    0.971    
-    ## SS_OSSS      -0.0005040  0.0029659   -0.17    0.865    
-    ## sexM:SS_OSSS -0.0006222  0.0041165   -0.15    0.880    
+    ## (Intercept)   5.618e-02  1.059e-03   53.07   <2e-16 ***
+    ## sexM          8.420e-06  1.534e-03    0.01    0.996    
+    ## SS_OSSS      -7.005e-05  1.631e-03   -0.04    0.966    
+    ## sexM:SS_OSSS -8.425e-04  2.264e-03   -0.37    0.710    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ##  contrast    estimate      SE df t.ratio p.value
-    ##  F OS - M OS 0.000103 0.00279 34   0.037  0.9709
-    ##  F OS - F SS 0.000504 0.00297 34   0.170  0.9709
-    ##  M OS - M SS 0.001126 0.00285 34   0.395  0.9709
-    ##  F SS - M SS 0.000725 0.00303 34   0.239  0.9709
+    ##  contrast     estimate      SE df t.ratio p.value
+    ##  F OS - M OS -8.42e-06 0.00153 34  -0.005  0.9957
+    ##  F OS - F SS  7.01e-05 0.00163 34   0.043  0.9957
+    ##  M OS - M SS  9.13e-04 0.00157 34   0.581  0.9957
+    ##  F SS - M SS  8.34e-04 0.00167 34   0.501  0.9957
     ## 
     ## P value adjustment: fdr method for 4 tests 
     ##  Family: gaussian  ( identity )
@@ -973,24 +956,24 @@ for (mod in modules) {
     ## Data: merged_data
     ## 
     ##      AIC      BIC   logLik deviance df.resid 
-    ##   -255.2   -246.9    132.6   -265.2       34 
+    ##   -316.4   -308.1    163.2   -326.4       34 
     ## 
     ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 6.52e-05 
+    ## Dispersion estimate for gaussian family (sigma^2): 1.36e-05 
     ## 
     ## Conditional model:
     ##               Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)   0.103474   0.002434   42.51   <2e-16 ***
-    ## sexM          0.004780   0.003528    1.36   0.1754    
-    ## SS_OSSS       0.007772   0.003751    2.07   0.0383 *  
-    ## sexM:SS_OSSS -0.006706   0.005207   -1.29   0.1978    
+    ## (Intercept)   0.057729   0.001110   51.99   <2e-16 ***
+    ## sexM          0.002529   0.001609    1.57   0.1160    
+    ## SS_OSSS       0.003605   0.001711    2.11   0.0352 *  
+    ## sexM:SS_OSSS -0.003647   0.002375   -1.54   0.1247    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ##  contrast    estimate      SE df t.ratio p.value
-    ##  F OS - M OS -0.00478 0.00353 34  -1.355  0.3686
-    ##  F OS - F SS -0.00777 0.00375 34  -2.072  0.1838
-    ##  M OS - M SS -0.00107 0.00361 34  -0.295  0.7696
-    ##  F SS - M SS  0.00193 0.00383 34   0.503  0.7696
+    ##  contrast     estimate      SE df t.ratio p.value
+    ##  F OS - M OS -2.53e-03 0.00161 34  -1.572  0.2505
+    ##  F OS - F SS -3.60e-03 0.00171 34  -2.106  0.1705
+    ##  M OS - M SS  4.21e-05 0.00165 34   0.026  0.9798
+    ##  F SS - M SS  1.12e-03 0.00175 34   0.640  0.7021
     ## 
     ## P value adjustment: fdr method for 4 tests 
     ##  Family: gaussian  ( identity )
@@ -998,24 +981,24 @@ for (mod in modules) {
     ## Data: merged_data
     ## 
     ##      AIC      BIC   logLik deviance df.resid 
-    ##   -241.2   -232.9    125.6   -251.2       34 
+    ##   -284.9   -276.6    147.5   -294.9       34 
     ## 
     ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 9.33e-05 
+    ## Dispersion estimate for gaussian family (sigma^2): 3.04e-05 
     ## 
     ## Conditional model:
-    ##               Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)   0.143252   0.002913   49.18   <2e-16 ***
-    ## sexM         -0.001055   0.004221   -0.25    0.803    
-    ## SS_OSSS       0.007081   0.004489    1.58    0.115    
-    ## sexM:SS_OSSS -0.007296   0.006231   -1.17    0.242    
+    ##                Estimate Std. Error z value Pr(>|z|)    
+    ## (Intercept)   0.0880448  0.0016634   52.93   <2e-16 ***
+    ## sexM         -0.0006609  0.0024105   -0.27    0.784    
+    ## SS_OSSS       0.0041038  0.0025635    1.60    0.109    
+    ## sexM:SS_OSSS -0.0044968  0.0035579   -1.26    0.206    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ##  contrast     estimate      SE df t.ratio p.value
-    ##  F OS - M OS  0.001055 0.00422 34   0.250  0.9606
-    ##  F OS - F SS -0.007081 0.00449 34  -1.577  0.2480
-    ##  M OS - M SS  0.000215 0.00432 34   0.050  0.9606
-    ##  F SS - M SS  0.008350 0.00458 34   1.822  0.2480
+    ##  F OS - M OS  0.000661 0.00241 34   0.274  0.8744
+    ##  F OS - F SS -0.004104 0.00256 34  -1.601  0.2373
+    ##  M OS - M SS  0.000393 0.00247 34   0.159  0.8744
+    ##  F SS - M SS  0.005158 0.00262 34   1.971  0.2277
     ## 
     ## P value adjustment: fdr method for 4 tests 
     ##  Family: gaussian  ( identity )
@@ -1023,24 +1006,24 @@ for (mod in modules) {
     ## Data: merged_data
     ## 
     ##      AIC      BIC   logLik deviance df.resid 
-    ##   -241.4   -233.1    125.7   -251.4       34 
+    ##   -284.8   -276.5    147.4   -294.8       34 
     ## 
     ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 9.29e-05 
+    ## Dispersion estimate for gaussian family (sigma^2): 3.05e-05 
     ## 
     ## Conditional model:
     ##               Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)   0.149485   0.002906   51.44   <2e-16 ***
-    ## sexM          0.003426   0.004211    0.81   0.4159    
-    ## SS_OSSS       0.008757   0.004478    1.96   0.0505 .  
-    ## sexM:SS_OSSS -0.011757   0.006215   -1.89   0.0585 .  
+    ## (Intercept)   0.088998   0.001666   53.41   <2e-16 ***
+    ## sexM          0.001872   0.002415    0.78   0.4382    
+    ## SS_OSSS       0.004944   0.002568    1.93   0.0542 .  
+    ## sexM:SS_OSSS -0.006982   0.003564   -1.96   0.0501 .  
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ##  contrast    estimate      SE df t.ratio p.value
-    ##  F OS - M OS -0.00343 0.00421 34  -0.814  0.4911
-    ##  F OS - F SS -0.00876 0.00448 34  -1.955  0.1544
-    ##  M OS - M SS  0.00300 0.00431 34   0.696  0.4911
-    ##  F SS - M SS  0.00833 0.00457 34   1.822  0.1544
+    ##  F OS - M OS -0.00187 0.00241 34  -0.775  0.4436
+    ##  F OS - F SS -0.00494 0.00257 34  -1.925  0.1252
+    ##  M OS - M SS  0.00204 0.00247 34   0.825  0.4436
+    ##  F SS - M SS  0.00511 0.00262 34   1.949  0.1252
     ## 
     ## P value adjustment: fdr method for 4 tests 
     ##  Family: gaussian  ( identity )
@@ -1048,24 +1031,24 @@ for (mod in modules) {
     ## Data: merged_data
     ## 
     ##      AIC      BIC   logLik deviance df.resid 
-    ##    -86.4    -78.1     48.2    -96.4       34 
+    ##   -147.8   -139.5     78.9   -157.8       34 
     ## 
     ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 0.00494 
+    ## Dispersion estimate for gaussian family (sigma^2): 0.00102 
     ## 
     ## Conditional model:
     ##               Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)   0.770599   0.021200   36.35   <2e-16 ***
-    ## sexM          0.017296   0.030722    0.56    0.573    
-    ## SS_OSSS      -0.025509   0.032672   -0.78    0.435    
-    ## sexM:SS_OSSS  0.004902   0.045346    0.11    0.914    
+    ## (Intercept)   0.410772   0.009648   42.58   <2e-16 ***
+    ## sexM          0.007882   0.013981    0.56    0.573    
+    ## SS_OSSS      -0.012934   0.014868   -0.87    0.384    
+    ## sexM:SS_OSSS  0.003311   0.020635    0.16    0.873    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ##  contrast    estimate     SE df t.ratio p.value
-    ##  F OS - M OS  -0.0173 0.0307 34  -0.563  0.5771
-    ##  F OS - F SS   0.0255 0.0327 34   0.781  0.5771
-    ##  M OS - M SS   0.0206 0.0314 34   0.655  0.5771
-    ##  F SS - M SS  -0.0222 0.0334 34  -0.666  0.5771
+    ##  F OS - M OS -0.00788 0.0140 34  -0.564  0.5766
+    ##  F OS - F SS  0.01293 0.0149 34   0.870  0.5766
+    ##  M OS - M SS  0.00962 0.0143 34   0.672  0.5766
+    ##  F SS - M SS -0.01119 0.0152 34  -0.737  0.5766
     ## 
     ## P value adjustment: fdr method for 4 tests 
     ##  Family: gaussian  ( identity )
@@ -1073,24 +1056,24 @@ for (mod in modules) {
     ## Data: merged_data
     ## 
     ##      AIC      BIC   logLik deviance df.resid 
-    ##   -226.8   -218.5    118.4   -236.8       34 
+    ##   -270.4   -262.1    140.2   -280.4       34 
     ## 
     ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 0.000135 
+    ## Dispersion estimate for gaussian family (sigma^2): 4.41e-05 
     ## 
     ## Conditional model:
-    ##               Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)   0.122067   0.003505   34.82   <2e-16 ***
-    ## sexM          0.004925   0.005080    0.97    0.332    
-    ## SS_OSSS      -0.001685   0.005402   -0.31    0.755    
-    ## sexM:SS_OSSS -0.003741   0.007498   -0.50    0.618    
+    ##                Estimate Std. Error z value Pr(>|z|)    
+    ## (Intercept)   0.0712615  0.0020029   35.58   <2e-16 ***
+    ## sexM          0.0029740  0.0029025    1.02    0.306    
+    ## SS_OSSS      -0.0005013  0.0030867   -0.16    0.871    
+    ## sexM:SS_OSSS -0.0028933  0.0042840   -0.68    0.499    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ##  contrast    estimate      SE df t.ratio p.value
-    ##  F OS - M OS -0.00493 0.00508 34  -0.970  0.6782
-    ##  F OS - F SS  0.00169 0.00540 34   0.312  0.8313
-    ##  M OS - M SS  0.00543 0.00520 34   1.044  0.6782
-    ##  F SS - M SS -0.00118 0.00551 34  -0.215  0.8313
+    ##  contrast     estimate      SE df t.ratio p.value
+    ##  F OS - M OS -2.97e-03 0.00290 34  -1.025  0.6255
+    ##  F OS - F SS  5.01e-04 0.00309 34   0.162  0.9797
+    ##  M OS - M SS  3.39e-03 0.00297 34   1.143  0.6255
+    ##  F SS - M SS -8.08e-05 0.00315 34  -0.026  0.9797
     ## 
     ## P value adjustment: fdr method for 4 tests 
     ##  Family: gaussian  ( identity )
@@ -1098,24 +1081,24 @@ for (mod in modules) {
     ## Data: merged_data
     ## 
     ##      AIC      BIC   logLik deviance df.resid 
-    ##   -220.1   -211.8    115.0   -230.1       34 
+    ##   -330.7   -322.4    170.4   -340.7       34 
     ## 
     ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 0.000161 
+    ## Dispersion estimate for gaussian family (sigma^2): 9.41e-06 
     ## 
     ## Conditional model:
-    ##               Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)   0.075804   0.003820  19.844   <2e-16 ***
-    ## sexM          0.003143   0.005536   0.568    0.570    
-    ## SS_OSSS       0.006121   0.005887   1.040    0.298    
-    ## sexM:SS_OSSS -0.002577   0.008171  -0.315    0.752    
+    ##                Estimate Std. Error z value Pr(>|z|)    
+    ## (Intercept)   0.0331286  0.0009248   35.82   <2e-16 ***
+    ## sexM          0.0016017  0.0013401    1.20    0.232    
+    ## SS_OSSS       0.0020200  0.0014251    1.42    0.156    
+    ## sexM:SS_OSSS -0.0019171  0.0019780   -0.97    0.332    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ##  contrast     estimate      SE df t.ratio p.value
-    ##  F OS - M OS -0.003143 0.00554 34  -0.568  0.7653
-    ##  F OS - F SS -0.006121 0.00589 34  -1.040  0.7653
-    ##  M OS - M SS -0.003545 0.00567 34  -0.626  0.7653
-    ##  F SS - M SS -0.000566 0.00601 34  -0.094  0.9255
+    ##  F OS - M OS -0.001602 0.00134 34  -1.195  0.4805
+    ##  F OS - F SS -0.002020 0.00143 34  -1.417  0.4805
+    ##  M OS - M SS -0.000103 0.00137 34  -0.075  0.9406
+    ##  F SS - M SS  0.000315 0.00145 34   0.217  0.9406
     ## 
     ## P value adjustment: fdr method for 4 tests 
     ##  Family: gaussian  ( identity )
@@ -1123,24 +1106,24 @@ for (mod in modules) {
     ## Data: merged_data
     ## 
     ##      AIC      BIC   logLik deviance df.resid 
-    ##   -173.2   -164.9     91.6   -183.2       34 
+    ##   -214.9   -206.6    112.5   -224.9       34 
     ## 
     ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 0.000534 
+    ## Dispersion estimate for gaussian family (sigma^2): 0.000183 
     ## 
     ## Conditional model:
     ##               Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)   0.307117   0.006965   44.09   <2e-16 ***
-    ## sexM         -0.003635   0.010094   -0.36   0.7188    
-    ## SS_OSSS      -0.025983   0.010734   -2.42   0.0155 *  
-    ## sexM:SS_OSSS  0.019165   0.014898    1.29   0.1983    
+    ## (Intercept)   0.180163   0.004080   44.16   <2e-16 ***
+    ## sexM         -0.001913   0.005913   -0.32   0.7463    
+    ## SS_OSSS      -0.014519   0.006288   -2.31   0.0209 *  
+    ## sexM:SS_OSSS  0.010157   0.008727    1.16   0.2445    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ##  contrast    estimate     SE df t.ratio p.value
-    ##  F OS - M OS  0.00363 0.0101 34   0.360  0.7210
-    ##  F OS - F SS  0.02598 0.0107 34   2.421  0.0840
-    ##  M OS - M SS  0.00682 0.0103 34   0.660  0.6850
-    ##  F SS - M SS -0.01553 0.0110 34  -1.417  0.3310
+    ##  contrast    estimate      SE df t.ratio p.value
+    ##  F OS - M OS  0.00191 0.00591 34   0.324  0.7483
+    ##  F OS - F SS  0.01452 0.00629 34   2.309  0.1086
+    ##  M OS - M SS  0.00436 0.00605 34   0.721  0.6346
+    ##  F SS - M SS -0.00824 0.00642 34  -1.284  0.4155
     ## 
     ## P value adjustment: fdr method for 4 tests
 
@@ -1185,22 +1168,455 @@ for (mod in modules) {
     ## Data: mod_df
     ## 
     ##      AIC      BIC   logLik deviance df.resid 
-    ##    146.2    150.0    -69.1    138.2       15 
+    ##    146.9    150.7    -69.5    138.9       15 
     ## 
     ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 84.4 
+    ## Dispersion estimate for gaussian family (sigma^2): 87.6 
     ## 
     ## Conditional model:
     ##             Estimate Std. Error z value Pr(>|z|)   
-    ## (Intercept)   13.000      4.595   2.829  0.00466 **
-    ## typeFM_real   -1.200      5.436  -0.221  0.82530   
-    ## typeMM_real   -4.200      6.164  -0.681  0.49566   
+    ## (Intercept)   12.750      4.680   2.724  0.00645 **
+    ## typeFM_real   -1.450      5.538  -0.262  0.79345   
+    ## typeMM_real   -2.750      6.279  -0.438  0.66143   
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ##  contrast          estimate   SE df t.ratio p.value
-    ##  FF_real - FM_real      1.2 5.44 15   0.221  0.8283
-    ##  FF_real - MM_real      4.2 6.16 15   0.681  0.8283
-    ##  FM_real - MM_real      3.0 5.03 15   0.596  0.8283
+    ##  FF_real - FM_real     1.45 5.54 15   0.262  0.8033
+    ##  FF_real - MM_real     2.75 6.28 15   0.438  0.8033
+    ##  FM_real - MM_real     1.30 5.13 15   0.254  0.8033
+    ## 
+    ## P value adjustment: fdr method for 3 tests 
+    ##  Family: gaussian  ( identity )
+    ## Formula:          dist ~ type
+    ## Data: mod_df
+    ## 
+    ##      AIC      BIC   logLik deviance df.resid 
+    ##    140.2    144.0    -66.1    132.2       15 
+    ## 
+    ## 
+    ## Dispersion estimate for gaussian family (sigma^2): 61.7 
+    ## 
+    ## Conditional model:
+    ##             Estimate Std. Error z value Pr(>|z|)  
+    ## (Intercept)    9.000      3.928   2.291   0.0219 *
+    ## typeFM_real    2.400      4.647   0.516   0.6055  
+    ## typeMM_real    4.000      5.269   0.759   0.4478  
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ##  contrast          estimate   SE df t.ratio p.value
+    ##  FF_real - FM_real     -2.4 4.65 15  -0.516  0.7152
+    ##  FF_real - MM_real     -4.0 5.27 15  -0.759  0.7152
+    ##  FM_real - MM_real     -1.6 4.30 15  -0.372  0.7152
+    ## 
+    ## P value adjustment: fdr method for 3 tests 
+    ##  Family: gaussian  ( identity )
+    ## Formula:          dist ~ type
+    ## Data: mod_df
+    ## 
+    ##      AIC      BIC   logLik deviance df.resid 
+    ##    140.2    144.0    -66.1    132.2       15 
+    ## 
+    ## 
+    ## Dispersion estimate for gaussian family (sigma^2): 61.6 
+    ## 
+    ## Conditional model:
+    ##             Estimate Std. Error z value Pr(>|z|)    
+    ## (Intercept)   15.250      3.923   3.887 0.000101 ***
+    ## typeFM_real   -2.550      4.642  -0.549 0.582755    
+    ## typeMM_real   -5.450      5.263  -1.035 0.300445    
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ##  contrast          estimate   SE df t.ratio p.value
+    ##  FF_real - FM_real     2.55 4.64 15   0.549  0.5908
+    ##  FF_real - MM_real     5.45 5.26 15   1.035  0.5908
+    ##  FM_real - MM_real     2.90 4.30 15   0.675  0.5908
+    ## 
+    ## P value adjustment: fdr method for 3 tests 
+    ##  Family: gaussian  ( identity )
+    ## Formula:          dist ~ type
+    ## Data: mod_df
+    ## 
+    ##      AIC      BIC   logLik deviance df.resid 
+    ##    140.9    144.7    -66.5    132.9       15 
+    ## 
+    ## 
+    ## Dispersion estimate for gaussian family (sigma^2): 63.9 
+    ## 
+    ## Conditional model:
+    ##             Estimate Std. Error z value Pr(>|z|)   
+    ## (Intercept)   12.250      3.997   3.064  0.00218 **
+    ## typeFM_real    1.250      4.730   0.264  0.79156   
+    ## typeMM_real    6.150      5.363   1.147  0.25150   
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ##  contrast          estimate   SE df t.ratio p.value
+    ##  FF_real - FM_real    -1.25 4.73 15  -0.264  0.7952
+    ##  FF_real - MM_real    -6.15 5.36 15  -1.147  0.4211
+    ##  FM_real - MM_real    -4.90 4.38 15  -1.119  0.4211
+    ## 
+    ## P value adjustment: fdr method for 3 tests 
+    ##  Family: gaussian  ( identity )
+    ## Formula:          dist ~ type
+    ## Data: mod_df
+    ## 
+    ##      AIC      BIC   logLik deviance df.resid 
+    ##    137.6    141.4    -64.8    129.6       15 
+    ## 
+    ## 
+    ## Dispersion estimate for gaussian family (sigma^2): 53.7 
+    ## 
+    ## Conditional model:
+    ##             Estimate Std. Error z value Pr(>|z|)   
+    ## (Intercept)   11.500      3.662   3.140  0.00169 **
+    ## typeFM_real    2.900      4.333   0.669  0.50336   
+    ## typeMM_real    2.500      4.914   0.509  0.61090   
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ##  contrast          estimate   SE df t.ratio p.value
+    ##  FF_real - FM_real     -2.9 4.33 15  -0.669  0.9219
+    ##  FF_real - MM_real     -2.5 4.91 15  -0.509  0.9219
+    ##  FM_real - MM_real      0.4 4.01 15   0.100  0.9219
+    ## 
+    ## P value adjustment: fdr method for 3 tests 
+    ##  Family: gaussian  ( identity )
+    ## Formula:          dist ~ type
+    ## Data: mod_df
+    ## 
+    ##      AIC      BIC   logLik deviance df.resid 
+    ##    132.7    136.5    -62.4    124.7       15 
+    ## 
+    ## 
+    ## Dispersion estimate for gaussian family (sigma^2): 41.5 
+    ## 
+    ## Conditional model:
+    ##             Estimate Std. Error z value Pr(>|z|)
+    ## (Intercept)    5.000      3.223   1.552    0.121
+    ## typeFM_real    4.700      3.813   1.233    0.218
+    ## typeMM_real   -0.400      4.324  -0.092    0.926
+    ##  contrast          estimate   SE df t.ratio p.value
+    ##  FF_real - FM_real     -4.7 3.81 15  -1.233  0.3550
+    ##  FF_real - MM_real      0.4 4.32 15   0.093  0.9275
+    ##  FM_real - MM_real      5.1 3.53 15   1.445  0.3550
+    ## 
+    ## P value adjustment: fdr method for 3 tests 
+    ##  Family: gaussian  ( identity )
+    ## Formula:          dist ~ type
+    ## Data: mod_df
+    ## 
+    ##      AIC      BIC   logLik deviance df.resid 
+    ##    141.0    144.8    -66.5    133.0       15 
+    ## 
+    ## 
+    ## Dispersion estimate for gaussian family (sigma^2): 64.4 
+    ## 
+    ## Conditional model:
+    ##             Estimate Std. Error z value Pr(>|z|)    
+    ## (Intercept)   13.750      4.011   3.428 0.000608 ***
+    ## typeFM_real   -2.850      4.746  -0.600 0.548177    
+    ## typeMM_real   -0.150      5.382  -0.028 0.977763    
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ##  contrast          estimate   SE df t.ratio p.value
+    ##  FF_real - FM_real     2.85 4.75 15   0.600  0.8357
+    ##  FF_real - MM_real     0.15 5.38 15   0.028  0.9781
+    ##  FM_real - MM_real    -2.70 4.39 15  -0.614  0.8357
+    ## 
+    ## P value adjustment: fdr method for 3 tests 
+    ##  Family: gaussian  ( identity )
+    ## Formula:          dist ~ type
+    ## Data: mod_df
+    ## 
+    ##      AIC      BIC   logLik deviance df.resid 
+    ##    135.9    139.7    -63.9    127.9       15 
+    ## 
+    ## 
+    ## Dispersion estimate for gaussian family (sigma^2): 49.1 
+    ## 
+    ## Conditional model:
+    ##             Estimate Std. Error z value Pr(>|z|)   
+    ## (Intercept)    9.750      3.502   2.784  0.00536 **
+    ## typeFM_real   -1.350      4.143  -0.326  0.74456   
+    ## typeMM_real    5.050      4.698   1.075  0.28242   
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ##  contrast          estimate   SE df t.ratio p.value
+    ##  FF_real - FM_real     1.35 4.14 15   0.326  0.7491
+    ##  FF_real - MM_real    -5.05 4.70 15  -1.075  0.4491
+    ##  FM_real - MM_real    -6.40 3.84 15  -1.668  0.3479
+    ## 
+    ## P value adjustment: fdr method for 3 tests 
+    ##  Family: gaussian  ( identity )
+    ## Formula:          dist ~ type
+    ## Data: mod_df
+    ## 
+    ##      AIC      BIC   logLik deviance df.resid 
+    ##    144.5    148.3    -68.2    136.5       15 
+    ## 
+    ## 
+    ## Dispersion estimate for gaussian family (sigma^2): 77.1 
+    ## 
+    ## Conditional model:
+    ##             Estimate Std. Error z value Pr(>|z|)
+    ## (Intercept)    6.500      4.392   1.480    0.139
+    ## typeFM_real    6.500      5.196   1.251    0.211
+    ## typeMM_real    6.700      5.892   1.137    0.255
+    ##  contrast          estimate   SE df t.ratio p.value
+    ##  FF_real - FM_real     -6.5 5.20 15  -1.251  0.4100
+    ##  FF_real - MM_real     -6.7 5.89 15  -1.137  0.4100
+    ##  FM_real - MM_real     -0.2 4.81 15  -0.042  0.9674
+    ## 
+    ## P value adjustment: fdr method for 3 tests 
+    ##  Family: gaussian  ( identity )
+    ## Formula:          dist ~ type
+    ## Data: mod_df
+    ## 
+    ##      AIC      BIC   logLik deviance df.resid 
+    ##    143.0    146.8    -67.5    135.0       15 
+    ## 
+    ## 
+    ## Dispersion estimate for gaussian family (sigma^2): 71.3 
+    ## 
+    ## Conditional model:
+    ##             Estimate Std. Error z value Pr(>|z|)   
+    ## (Intercept)   12.000      4.221   2.843  0.00447 **
+    ## typeFM_real   -2.600      4.995  -0.520  0.60270   
+    ## typeMM_real   -1.000      5.664  -0.177  0.85985   
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ##  contrast          estimate   SE df t.ratio p.value
+    ##  FF_real - FM_real      2.6 4.99 15   0.521  0.8622
+    ##  FF_real - MM_real      1.0 5.66 15   0.177  0.8622
+    ##  FM_real - MM_real     -1.6 4.62 15  -0.346  0.8622
+    ## 
+    ## P value adjustment: fdr method for 3 tests 
+    ##  Family: gaussian  ( identity )
+    ## Formula:          dist ~ type
+    ## Data: mod_df
+    ## 
+    ##      AIC      BIC   logLik deviance df.resid 
+    ##    129.6    133.4    -60.8    121.6       15 
+    ## 
+    ## 
+    ## Dispersion estimate for gaussian family (sigma^2): 35.2 
+    ## 
+    ## Conditional model:
+    ##             Estimate Std. Error z value Pr(>|z|)  
+    ## (Intercept)    7.500      2.966   2.528   0.0115 *
+    ## typeFM_real    3.400      3.510   0.969   0.3327  
+    ## typeMM_real   -1.300      3.980  -0.327   0.7439  
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ##  contrast          estimate   SE df t.ratio p.value
+    ##  FF_real - FM_real     -3.4 3.51 15  -0.969  0.5221
+    ##  FF_real - MM_real      1.3 3.98 15   0.327  0.7484
+    ##  FM_real - MM_real      4.7 3.25 15   1.446  0.5059
+    ## 
+    ## P value adjustment: fdr method for 3 tests 
+    ##  Family: gaussian  ( identity )
+    ## Formula:          dist ~ type
+    ## Data: mod_df
+    ## 
+    ##      AIC      BIC   logLik deviance df.resid 
+    ##    129.1    132.9    -60.6    121.1       15 
+    ## 
+    ## 
+    ## Dispersion estimate for gaussian family (sigma^2): 34.4 
+    ## 
+    ## Conditional model:
+    ##             Estimate Std. Error z value Pr(>|z|)    
+    ## (Intercept)    9.750      2.933   3.325 0.000885 ***
+    ## typeFM_real    4.950      3.470   1.427 0.153721    
+    ## typeMM_real    9.050      3.935   2.300 0.021443 *  
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ##  contrast          estimate   SE df t.ratio p.value
+    ##  FF_real - FM_real    -4.95 3.47 15  -1.427  0.2213
+    ##  FF_real - MM_real    -9.05 3.93 15  -2.300  0.1087
+    ##  FM_real - MM_real    -4.10 3.21 15  -1.276  0.2213
+    ## 
+    ## P value adjustment: fdr method for 3 tests 
+    ##  Family: gaussian  ( identity )
+    ## Formula:          dist ~ type
+    ## Data: mod_df
+    ## 
+    ##      AIC      BIC   logLik deviance df.resid 
+    ##    145.6    149.4    -68.8    137.6       15 
+    ## 
+    ## 
+    ## Dispersion estimate for gaussian family (sigma^2): 81.7 
+    ## 
+    ## Conditional model:
+    ##             Estimate Std. Error z value Pr(>|z|)  
+    ## (Intercept)    9.250      4.520   2.046   0.0407 *
+    ## typeFM_real    2.650      5.348   0.496   0.6203  
+    ## typeMM_real    1.150      6.064   0.190   0.8496  
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ##  contrast          estimate   SE df t.ratio p.value
+    ##  FF_real - FM_real    -2.65 5.35 15  -0.495  0.8521
+    ##  FF_real - MM_real    -1.15 6.06 15  -0.190  0.8521
+    ##  FM_real - MM_real     1.50 4.95 15   0.303  0.8521
+    ## 
+    ## P value adjustment: fdr method for 3 tests 
+    ##  Family: gaussian  ( identity )
+    ## Formula:          dist ~ type
+    ## Data: mod_df
+    ## 
+    ##      AIC      BIC   logLik deviance df.resid 
+    ##    143.5    147.3    -67.8    135.5       15 
+    ## 
+    ## 
+    ## Dispersion estimate for gaussian family (sigma^2): 73.3 
+    ## 
+    ## Conditional model:
+    ##             Estimate Std. Error z value Pr(>|z|)   
+    ## (Intercept)   13.000      4.281   3.037  0.00239 **
+    ## typeFM_real   -1.800      5.065  -0.355  0.72232   
+    ## typeMM_real    3.600      5.743   0.627  0.53079   
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ##  contrast          estimate   SE df t.ratio p.value
+    ##  FF_real - FM_real      1.8 5.07 15   0.355  0.7273
+    ##  FF_real - MM_real     -3.6 5.74 15  -0.627  0.7273
+    ##  FM_real - MM_real     -5.4 4.69 15  -1.152  0.7273
+    ## 
+    ## P value adjustment: fdr method for 3 tests 
+    ##  Family: gaussian  ( identity )
+    ## Formula:          dist ~ type
+    ## Data: mod_df
+    ## 
+    ##      AIC      BIC   logLik deviance df.resid 
+    ##    137.8    141.6    -64.9    129.8       15 
+    ## 
+    ## 
+    ## Dispersion estimate for gaussian family (sigma^2): 54.3 
+    ## 
+    ## Conditional model:
+    ##             Estimate Std. Error z value Pr(>|z|)  
+    ## (Intercept)    7.250      3.684   1.968   0.0491 *
+    ## typeFM_real    2.050      4.359   0.470   0.6382  
+    ## typeMM_real    7.550      4.943   1.527   0.1267  
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ##  contrast          estimate   SE df t.ratio p.value
+    ##  FF_real - FM_real    -2.05 4.36 15  -0.470  0.6449
+    ##  FF_real - MM_real    -7.55 4.94 15  -1.527  0.2896
+    ##  FM_real - MM_real    -5.50 4.04 15  -1.363  0.2896
+    ## 
+    ## P value adjustment: fdr method for 3 tests 
+    ##  Family: gaussian  ( identity )
+    ## Formula:          dist ~ type
+    ## Data: mod_df
+    ## 
+    ##      AIC      BIC   logLik deviance df.resid 
+    ##    145.5    149.3    -68.8    137.5       15 
+    ## 
+    ## 
+    ## Dispersion estimate for gaussian family (sigma^2): 81.6 
+    ## 
+    ## Conditional model:
+    ##             Estimate Std. Error z value Pr(>|z|)  
+    ## (Intercept)   10.500      4.516   2.325   0.0201 *
+    ## typeFM_real    1.500      5.343   0.281   0.7789  
+    ## typeMM_real    6.300      6.059   1.040   0.2984  
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ##  contrast          estimate   SE df t.ratio p.value
+    ##  FF_real - FM_real     -1.5 5.34 15  -0.281  0.7827
+    ##  FF_real - MM_real     -6.3 6.06 15  -1.040  0.5209
+    ##  FM_real - MM_real     -4.8 4.95 15  -0.970  0.5209
+    ## 
+    ## P value adjustment: fdr method for 3 tests 
+    ##  Family: gaussian  ( identity )
+    ## Formula:          dist ~ type
+    ## Data: mod_df
+    ## 
+    ##      AIC      BIC   logLik deviance df.resid 
+    ##    136.3    140.1    -64.2    128.3       15 
+    ## 
+    ## 
+    ## Dispersion estimate for gaussian family (sigma^2): 50.1 
+    ## 
+    ## Conditional model:
+    ##             Estimate Std. Error z value Pr(>|z|)    
+    ## (Intercept)   16.000      3.541   4.519 6.22e-06 ***
+    ## typeFM_real   -5.200      4.189  -1.241    0.215    
+    ## typeMM_real   -2.600      4.750  -0.547    0.584    
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ##  contrast          estimate   SE df t.ratio p.value
+    ##  FF_real - FM_real      5.2 4.19 15   1.241  0.5922
+    ##  FF_real - MM_real      2.6 4.75 15   0.547  0.5922
+    ##  FM_real - MM_real     -2.6 3.88 15  -0.670  0.5922
+    ## 
+    ## P value adjustment: fdr method for 3 tests 
+    ##  Family: gaussian  ( identity )
+    ## Formula:          dist ~ type
+    ## Data: mod_df
+    ## 
+    ##      AIC      BIC   logLik deviance df.resid 
+    ##    143.5    147.3    -67.8    135.5       15 
+    ## 
+    ## 
+    ## Dispersion estimate for gaussian family (sigma^2): 73.3 
+    ## 
+    ## Conditional model:
+    ##             Estimate Std. Error z value Pr(>|z|)  
+    ## (Intercept)   11.000      4.281   2.569   0.0102 *
+    ## typeFM_real    1.900      5.065   0.375   0.7076  
+    ## typeMM_real    2.000      5.744   0.348   0.7277  
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ##  contrast          estimate   SE df t.ratio p.value
+    ##  FF_real - FM_real     -1.9 5.07 15  -0.375  0.9833
+    ##  FF_real - MM_real     -2.0 5.74 15  -0.348  0.9833
+    ##  FM_real - MM_real     -0.1 4.69 15  -0.021  0.9833
+    ## 
+    ## P value adjustment: fdr method for 3 tests 
+    ##  Family: gaussian  ( identity )
+    ## Formula:          dist ~ type
+    ## Data: mod_df
+    ## 
+    ##      AIC      BIC   logLik deviance df.resid 
+    ##    146.0    149.8    -69.0    138.0       15 
+    ## 
+    ## 
+    ## Dispersion estimate for gaussian family (sigma^2): 83.7 
+    ## 
+    ## Conditional model:
+    ##             Estimate Std. Error z value Pr(>|z|)   
+    ## (Intercept)   12.000      4.575   2.623  0.00872 **
+    ## typeFM_real    0.300      5.413   0.055  0.95581   
+    ## typeMM_real    1.200      6.138   0.196  0.84500   
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ##  contrast          estimate   SE df t.ratio p.value
+    ##  FF_real - FM_real     -0.3 5.41 15  -0.055  0.9565
+    ##  FF_real - MM_real     -1.2 6.14 15  -0.196  0.9565
+    ##  FM_real - MM_real     -0.9 5.01 15  -0.180  0.9565
+    ## 
+    ## P value adjustment: fdr method for 3 tests 
+    ##  Family: gaussian  ( identity )
+    ## Formula:          dist ~ type
+    ## Data: mod_df
+    ## 
+    ##      AIC      BIC   logLik deviance df.resid 
+    ##    136.5    140.2    -64.2    128.5       15 
+    ## 
+    ## 
+    ## Dispersion estimate for gaussian family (sigma^2): 50.5 
+    ## 
+    ## Conditional model:
+    ##             Estimate Std. Error z value Pr(>|z|)  
+    ## (Intercept)    8.000      3.555   2.251   0.0244 *
+    ## typeFM_real    3.200      4.206   0.761   0.4468  
+    ## typeMM_real    6.800      4.769   1.426   0.1539  
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ##  contrast          estimate   SE df t.ratio p.value
+    ##  FF_real - FM_real     -3.2 4.21 15  -0.761  0.4586
+    ##  FF_real - MM_real     -6.8 4.77 15  -1.426  0.4586
+    ##  FM_real - MM_real     -3.6 3.89 15  -0.924  0.4586
     ## 
     ## P value adjustment: fdr method for 3 tests 
     ##  Family: gaussian  ( identity )
@@ -1211,42 +1627,19 @@ for (mod in modules) {
     ##    141.9    145.7    -67.0    133.9       15 
     ## 
     ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 67.5 
-    ## 
-    ## Conditional model:
-    ##             Estimate Std. Error z value Pr(>|z|)  
-    ## (Intercept)    9.750      4.106   2.374   0.0176 *
-    ## typeFM_real    1.450      4.859   0.298   0.7654  
-    ## typeMM_real    2.850      5.509   0.517   0.6049  
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ##  contrast          estimate   SE df t.ratio p.value
-    ##  FF_real - FM_real    -1.45 4.86 15  -0.298  0.7695
-    ##  FF_real - MM_real    -2.85 5.51 15  -0.517  0.7695
-    ##  FM_real - MM_real    -1.40 4.50 15  -0.311  0.7695
-    ## 
-    ## P value adjustment: fdr method for 3 tests 
-    ##  Family: gaussian  ( identity )
-    ## Formula:          dist ~ type
-    ## Data: mod_df
-    ## 
-    ##      AIC      BIC   logLik deviance df.resid 
-    ##    137.5    141.3    -64.7    129.5       15 
-    ## 
-    ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 53.4 
+    ## Dispersion estimate for gaussian family (sigma^2): 67.4 
     ## 
     ## Conditional model:
     ##             Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)   16.000      3.653   4.380 1.18e-05 ***
-    ## typeFM_real   -4.000      4.322  -0.926    0.355    
-    ## typeMM_real   -6.000      4.901  -1.224    0.221    
+    ## (Intercept)   21.250      4.105   5.177 2.25e-07 ***
+    ## typeFM_real  -10.150      4.857  -2.090   0.0366 *  
+    ## typeMM_real   -6.050      5.507  -1.099   0.2719    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ##  contrast          estimate   SE df t.ratio p.value
-    ##  FF_real - FM_real        4 4.32 15   0.926  0.5540
-    ##  FF_real - MM_real        6 4.90 15   1.224  0.5540
-    ##  FM_real - MM_real        2 4.00 15   0.500  0.6244
+    ##  FF_real - FM_real    10.15 4.86 15   2.090  0.1622
+    ##  FF_real - MM_real     6.05 5.51 15   1.099  0.3763
+    ##  FM_real - MM_real    -4.10 4.50 15  -0.912  0.3763
     ## 
     ## P value adjustment: fdr method for 3 tests 
     ##  Family: gaussian  ( identity )
@@ -1254,22 +1647,22 @@ for (mod in modules) {
     ## Data: mod_df
     ## 
     ##      AIC      BIC   logLik deviance df.resid 
-    ##    139.6    143.4    -65.8    131.6       15 
+    ##    138.7    142.5    -65.3    130.7       15 
     ## 
     ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 59.8 
+    ## Dispersion estimate for gaussian family (sigma^2): 56.8 
     ## 
     ## Conditional model:
     ##             Estimate Std. Error z value Pr(>|z|)   
-    ## (Intercept)   12.250      3.865   3.169  0.00153 **
-    ## typeFM_real    1.950      4.574   0.426  0.66985   
-    ## typeMM_real    4.150      5.186   0.800  0.42358   
+    ## (Intercept)   11.500      3.769   3.051  0.00228 **
+    ## typeFM_real    0.800      4.460   0.179  0.85765   
+    ## typeMM_real   -2.700      5.057  -0.534  0.59342   
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ##  contrast          estimate   SE df t.ratio p.value
-    ##  FF_real - FM_real    -1.95 4.57 15  -0.426  0.6759
-    ##  FF_real - MM_real    -4.15 5.19 15  -0.800  0.6759
-    ##  FM_real - MM_real    -2.20 4.23 15  -0.520  0.6759
+    ##  FF_real - FM_real     -0.8 4.46 15  -0.179  0.8601
+    ##  FF_real - MM_real      2.7 5.06 15   0.534  0.8601
+    ##  FM_real - MM_real      3.5 4.13 15   0.848  0.8601
     ## 
     ## P value adjustment: fdr method for 3 tests 
     ##  Family: gaussian  ( identity )
@@ -1277,436 +1670,22 @@ for (mod in modules) {
     ## Data: mod_df
     ## 
     ##      AIC      BIC   logLik deviance df.resid 
-    ##    138.3    142.1    -65.1    130.3       15 
+    ##    133.5    137.3    -62.7    125.5       15 
     ## 
     ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 55.7 
+    ## Dispersion estimate for gaussian family (sigma^2): 43.3 
     ## 
     ## Conditional model:
     ##             Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)   12.500      3.731   3.350 0.000807 ***
-    ## typeFM_real    2.600      4.415   0.589 0.555883    
-    ## typeMM_real    0.500      5.006   0.100 0.920436    
+    ## (Intercept)   13.250      3.289   4.029  5.6e-05 ***
+    ## typeFM_real   -2.250      3.891  -0.578    0.563    
+    ## typeMM_real   -3.850      4.412  -0.873    0.383    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ##  contrast          estimate   SE df t.ratio p.value
-    ##  FF_real - FM_real     -2.6 4.41 15  -0.589  0.9218
-    ##  FF_real - MM_real     -0.5 5.01 15  -0.100  0.9218
-    ##  FM_real - MM_real      2.1 4.09 15   0.514  0.9218
-    ## 
-    ## P value adjustment: fdr method for 3 tests 
-    ##  Family: gaussian  ( identity )
-    ## Formula:          dist ~ type
-    ## Data: mod_df
-    ## 
-    ##      AIC      BIC   logLik deviance df.resid 
-    ##    124.7    128.5    -58.3    116.7       15 
-    ## 
-    ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 27.2 
-    ## 
-    ## Conditional model:
-    ##             Estimate Std. Error z value Pr(>|z|)  
-    ## (Intercept)    5.250      2.609   2.013   0.0442 *
-    ## typeFM_real    3.350      3.086   1.085   0.2778  
-    ## typeMM_real   -2.250      3.500  -0.643   0.5203  
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ##  contrast          estimate   SE df t.ratio p.value
-    ##  FF_real - FM_real    -3.35 3.09 15  -1.085  0.4423
-    ##  FF_real - MM_real     2.25 3.50 15   0.643  0.5300
-    ##  FM_real - MM_real     5.60 2.86 15   1.960  0.2066
-    ## 
-    ## P value adjustment: fdr method for 3 tests 
-    ##  Family: gaussian  ( identity )
-    ## Formula:          dist ~ type
-    ## Data: mod_df
-    ## 
-    ##      AIC      BIC   logLik deviance df.resid 
-    ##    139.3    143.1    -65.6    131.3       15 
-    ## 
-    ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 58.6 
-    ## 
-    ## Conditional model:
-    ##             Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)   13.250      3.829   3.461 0.000538 ***
-    ## typeFM_real   -2.650      4.530  -0.585 0.558548    
-    ## typeMM_real    0.950      5.136   0.185 0.853268    
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ##  contrast          estimate   SE df t.ratio p.value
-    ##  FF_real - FM_real     2.65 4.53 15   0.585  0.8509
-    ##  FF_real - MM_real    -0.95 5.14 15  -0.185  0.8557
-    ##  FM_real - MM_real    -3.60 4.19 15  -0.858  0.8509
-    ## 
-    ## P value adjustment: fdr method for 3 tests 
-    ##  Family: gaussian  ( identity )
-    ## Formula:          dist ~ type
-    ## Data: mod_df
-    ## 
-    ##      AIC      BIC   logLik deviance df.resid 
-    ##    134.8    138.6    -63.4    126.8       15 
-    ## 
-    ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 46.4 
-    ## 
-    ## Conditional model:
-    ##             Estimate Std. Error z value Pr(>|z|)  
-    ## (Intercept)    7.750      3.406   2.276   0.0229 *
-    ## typeFM_real    0.450      4.030   0.112   0.9111  
-    ## typeMM_real    6.850      4.569   1.499   0.1338  
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ##  contrast          estimate   SE df t.ratio p.value
-    ##  FF_real - FM_real    -0.45 4.03 15  -0.112  0.9126
-    ##  FF_real - MM_real    -6.85 4.57 15  -1.499  0.2319
-    ##  FM_real - MM_real    -6.40 3.73 15  -1.715  0.2319
-    ## 
-    ## P value adjustment: fdr method for 3 tests 
-    ##  Family: gaussian  ( identity )
-    ## Formula:          dist ~ type
-    ## Data: mod_df
-    ## 
-    ##      AIC      BIC   logLik deviance df.resid 
-    ##    140.5    144.3    -66.3    132.5       15 
-    ## 
-    ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 62.6 
-    ## 
-    ## Conditional model:
-    ##             Estimate Std. Error z value Pr(>|z|)  
-    ## (Intercept)    7.250      3.956   1.833   0.0668 .
-    ## typeFM_real    4.350      4.680   0.929   0.3527  
-    ## typeMM_real    6.750      5.307   1.272   0.2034  
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ##  contrast          estimate   SE df t.ratio p.value
-    ##  FF_real - FM_real    -4.35 4.68 15  -0.929  0.5511
-    ##  FF_real - MM_real    -6.75 5.31 15  -1.272  0.5511
-    ##  FM_real - MM_real    -2.40 4.33 15  -0.554  0.5878
-    ## 
-    ## P value adjustment: fdr method for 3 tests 
-    ##  Family: gaussian  ( identity )
-    ## Formula:          dist ~ type
-    ## Data: mod_df
-    ## 
-    ##      AIC      BIC   logLik deviance df.resid 
-    ##    144.0    147.8    -68.0    136.0       15 
-    ## 
-    ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 75.3 
-    ## 
-    ## Conditional model:
-    ##             Estimate Std. Error z value Pr(>|z|)   
-    ## (Intercept)   11.750      4.339   2.708  0.00677 **
-    ## typeFM_real   -3.150      5.135  -0.614  0.53955   
-    ## typeMM_real   -2.750      5.822  -0.472  0.63668   
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ##  contrast          estimate   SE df t.ratio p.value
-    ##  FF_real - FM_real     3.15 5.13 15   0.613  0.9340
-    ##  FF_real - MM_real     2.75 5.82 15   0.472  0.9340
-    ##  FM_real - MM_real    -0.40 4.75 15  -0.084  0.9340
-    ## 
-    ## P value adjustment: fdr method for 3 tests 
-    ##  Family: gaussian  ( identity )
-    ## Formula:          dist ~ type
-    ## Data: mod_df
-    ## 
-    ##      AIC      BIC   logLik deviance df.resid 
-    ##    128.1    131.8    -60.0    120.1       15 
-    ## 
-    ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 32.5 
-    ## 
-    ## Conditional model:
-    ##             Estimate Std. Error z value Pr(>|z|)  
-    ## (Intercept)    7.250      2.851   2.543    0.011 *
-    ## typeFM_real    3.750      3.373   1.112    0.266  
-    ## typeMM_real   -1.450      3.824  -0.379    0.705  
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ##  contrast          estimate   SE df t.ratio p.value
-    ##  FF_real - FM_real    -3.75 3.37 15  -1.112  0.4256
-    ##  FF_real - MM_real     1.45 3.82 15   0.379  0.7099
-    ##  FM_real - MM_real     5.20 3.12 15   1.665  0.3498
-    ## 
-    ## P value adjustment: fdr method for 3 tests 
-    ##  Family: gaussian  ( identity )
-    ## Formula:          dist ~ type
-    ## Data: mod_df
-    ## 
-    ##      AIC      BIC   logLik deviance df.resid 
-    ##    127.7    131.4    -59.8    119.7       15 
-    ## 
-    ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 31.8 
-    ## 
-    ## Conditional model:
-    ##             Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)   10.000      2.821   3.545 0.000393 ***
-    ## typeFM_real    4.100      3.338   1.228 0.219357    
-    ## typeMM_real    7.000      3.785   1.849 0.064404 .  
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ##  contrast          estimate   SE df t.ratio p.value
-    ##  FF_real - FM_real     -4.1 3.34 15  -1.228  0.3574
-    ##  FF_real - MM_real     -7.0 3.79 15  -1.849  0.2526
-    ##  FM_real - MM_real     -2.9 3.09 15  -0.938  0.3629
-    ## 
-    ## P value adjustment: fdr method for 3 tests 
-    ##  Family: gaussian  ( identity )
-    ## Formula:          dist ~ type
-    ## Data: mod_df
-    ## 
-    ##      AIC      BIC   logLik deviance df.resid 
-    ##    142.3    146.1    -67.1    134.3       15 
-    ## 
-    ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 68.7 
-    ## 
-    ## Conditional model:
-    ##             Estimate Std. Error z value Pr(>|z|)   
-    ## (Intercept)  12.0000     4.1448   2.895  0.00379 **
-    ## typeFM_real  -0.2001     4.9041  -0.041  0.96746   
-    ## typeMM_real  -1.0000     5.5608  -0.180  0.85729   
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ##  contrast          estimate   SE df t.ratio p.value
-    ##  FF_real - FM_real      0.2 4.90 15   0.041  0.9680
-    ##  FF_real - MM_real      1.0 5.56 15   0.180  0.9680
-    ##  FM_real - MM_real      0.8 4.54 15   0.176  0.9680
-    ## 
-    ## P value adjustment: fdr method for 3 tests 
-    ##  Family: gaussian  ( identity )
-    ## Formula:          dist ~ type
-    ## Data: mod_df
-    ## 
-    ##      AIC      BIC   logLik deviance df.resid 
-    ##    143.9    147.7    -67.9    135.9       15 
-    ## 
-    ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 74.7 
-    ## 
-    ## Conditional model:
-    ##             Estimate Std. Error z value Pr(>|z|)   
-    ## (Intercept)   12.250      4.322   2.834  0.00459 **
-    ## typeFM_real   -0.950      5.114  -0.186  0.85263   
-    ## typeMM_real    4.950      5.799   0.854  0.39329   
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ##  contrast          estimate   SE df t.ratio p.value
-    ##  FF_real - FM_real     0.95 5.11 15   0.186  0.8551
-    ##  FF_real - MM_real    -4.95 5.80 15  -0.854  0.6101
-    ##  FM_real - MM_real    -5.90 4.73 15  -1.246  0.6101
-    ## 
-    ## P value adjustment: fdr method for 3 tests 
-    ##  Family: gaussian  ( identity )
-    ## Formula:          dist ~ type
-    ## Data: mod_df
-    ## 
-    ##      AIC      BIC   logLik deviance df.resid 
-    ##    137.8    141.5    -64.9    129.8       15 
-    ## 
-    ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 54.1 
-    ## 
-    ## Conditional model:
-    ##             Estimate Std. Error z value Pr(>|z|)  
-    ## (Intercept)    8.500      3.679   2.311   0.0209 *
-    ## typeFM_real    0.100      4.353   0.023   0.9817  
-    ## typeMM_real    4.100      4.936   0.831   0.4062  
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ##  contrast          estimate   SE df t.ratio p.value
-    ##  FF_real - FM_real     -0.1 4.35 15  -0.023  0.9820
-    ##  FF_real - MM_real     -4.1 4.94 15  -0.831  0.6288
-    ##  FM_real - MM_real     -4.0 4.03 15  -0.993  0.6288
-    ## 
-    ## P value adjustment: fdr method for 3 tests 
-    ##  Family: gaussian  ( identity )
-    ## Formula:          dist ~ type
-    ## Data: mod_df
-    ## 
-    ##      AIC      BIC   logLik deviance df.resid 
-    ##    141.9    145.7    -67.0    133.9       15 
-    ## 
-    ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 67.3 
-    ## 
-    ## Conditional model:
-    ##             Estimate Std. Error z value Pr(>|z|)  
-    ## (Intercept)   10.000      4.103   2.438   0.0148 *
-    ## typeFM_real    1.400      4.854   0.288   0.7730  
-    ## typeMM_real    9.800      5.504   1.780   0.0750 .
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ##  contrast          estimate   SE df t.ratio p.value
-    ##  FF_real - FM_real     -1.4 4.85 15  -0.288  0.7770
-    ##  FF_real - MM_real     -9.8 5.50 15  -1.780  0.1429
-    ##  FM_real - MM_real     -8.4 4.49 15  -1.869  0.1429
-    ## 
-    ## P value adjustment: fdr method for 3 tests 
-    ##  Family: gaussian  ( identity )
-    ## Formula:          dist ~ type
-    ## Data: mod_df
-    ## 
-    ##      AIC      BIC   logLik deviance df.resid 
-    ##    141.9    145.6    -66.9    133.9       15 
-    ## 
-    ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 67.2 
-    ## 
-    ## Conditional model:
-    ##             Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)   18.250      4.098   4.454 8.43e-06 ***
-    ## typeFM_real   -7.550      4.848  -1.557    0.119    
-    ## typeMM_real   -5.650      5.497  -1.028    0.304    
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ##  contrast          estimate   SE df t.ratio p.value
-    ##  FF_real - FM_real     7.55 4.85 15   1.557  0.4208
-    ##  FF_real - MM_real     5.65 5.50 15   1.028  0.4805
-    ##  FM_real - MM_real    -1.90 4.49 15  -0.423  0.6781
-    ## 
-    ## P value adjustment: fdr method for 3 tests 
-    ##  Family: gaussian  ( identity )
-    ## Formula:          dist ~ type
-    ## Data: mod_df
-    ## 
-    ##      AIC      BIC   logLik deviance df.resid 
-    ##    143.6    147.4    -67.8    135.6       15 
-    ## 
-    ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 73.6 
-    ## 
-    ## Conditional model:
-    ##             Estimate Std. Error z value Pr(>|z|)   
-    ## (Intercept)   12.000      4.291   2.797  0.00516 **
-    ## typeFM_real    0.500      5.077   0.098  0.92155   
-    ## typeMM_real    0.200      5.757   0.035  0.97228   
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ##  contrast          estimate   SE df t.ratio p.value
-    ##  FF_real - FM_real     -0.5 5.08 15  -0.098  0.9727
-    ##  FF_real - MM_real     -0.2 5.76 15  -0.035  0.9727
-    ##  FM_real - MM_real      0.3 4.70 15   0.064  0.9727
-    ## 
-    ## P value adjustment: fdr method for 3 tests 
-    ##  Family: gaussian  ( identity )
-    ## Formula:          dist ~ type
-    ## Data: mod_df
-    ## 
-    ##      AIC      BIC   logLik deviance df.resid 
-    ##    144.1    147.9    -68.0    136.1       15 
-    ## 
-    ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 75.6 
-    ## 
-    ## Conditional model:
-    ##             Estimate Std. Error z value Pr(>|z|)   
-    ## (Intercept)   12.000      4.346   2.761  0.00576 **
-    ## typeFM_real    0.400      5.143   0.078  0.93800   
-    ## typeMM_real    2.400      5.831   0.412  0.68064   
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ##  contrast          estimate   SE df t.ratio p.value
-    ##  FF_real - FM_real     -0.4 5.14 15  -0.078  0.9390
-    ##  FF_real - MM_real     -2.4 5.83 15  -0.412  0.9390
-    ##  FM_real - MM_real     -2.0 4.76 15  -0.420  0.9390
-    ## 
-    ## P value adjustment: fdr method for 3 tests 
-    ##  Family: gaussian  ( identity )
-    ## Formula:          dist ~ type
-    ## Data: mod_df
-    ## 
-    ##      AIC      BIC   logLik deviance df.resid 
-    ##    136.4    140.2    -64.2    128.4       15 
-    ## 
-    ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 50.4 
-    ## 
-    ## Conditional model:
-    ##             Estimate Std. Error z value Pr(>|z|)  
-    ## (Intercept)    6.250      3.550   1.760   0.0783 .
-    ## typeFM_real    5.350      4.201   1.274   0.2028  
-    ## typeMM_real    7.950      4.763   1.669   0.0951 .
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ##  contrast          estimate   SE df t.ratio p.value
-    ##  FF_real - FM_real    -5.35 4.20 15  -1.274  0.3333
-    ##  FF_real - MM_real    -7.95 4.76 15  -1.669  0.3333
-    ##  FM_real - MM_real    -2.60 3.89 15  -0.669  0.5140
-    ## 
-    ## P value adjustment: fdr method for 3 tests 
-    ##  Family: gaussian  ( identity )
-    ## Formula:          dist ~ type
-    ## Data: mod_df
-    ## 
-    ##      AIC      BIC   logLik deviance df.resid 
-    ##    142.0    145.8    -67.0    134.0       15 
-    ## 
-    ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 67.8 
-    ## 
-    ## Conditional model:
-    ##             Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)   20.500      4.118   4.978 6.41e-07 ***
-    ## typeFM_real  -10.000      4.872  -2.052   0.0401 *  
-    ## typeMM_real   -6.100      5.525  -1.104   0.2695    
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ##  contrast          estimate   SE df t.ratio p.value
-    ##  FF_real - FM_real     10.0 4.87 15   2.052  0.1740
-    ##  FF_real - MM_real      6.1 5.52 15   1.104  0.4009
-    ##  FM_real - MM_real     -3.9 4.51 15  -0.865  0.4009
-    ## 
-    ## P value adjustment: fdr method for 3 tests 
-    ##  Family: gaussian  ( identity )
-    ## Formula:          dist ~ type
-    ## Data: mod_df
-    ## 
-    ##      AIC      BIC   logLik deviance df.resid 
-    ##    129.8    133.6    -60.9    121.8       15 
-    ## 
-    ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 35.7 
-    ## 
-    ## Conditional model:
-    ##             Estimate Std. Error z value Pr(>|z|)   
-    ## (Intercept)    8.750      2.988   2.929   0.0034 **
-    ## typeFM_real    3.450      3.535   0.976   0.3291   
-    ## typeMM_real   -1.750      4.008  -0.437   0.6624   
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ##  contrast          estimate   SE df t.ratio p.value
-    ##  FF_real - FM_real    -3.45 3.53 15  -0.976  0.5168
-    ##  FF_real - MM_real     1.75 4.01 15   0.437  0.6686
-    ##  FM_real - MM_real     5.20 3.27 15   1.589  0.3988
-    ## 
-    ## P value adjustment: fdr method for 3 tests 
-    ##  Family: gaussian  ( identity )
-    ## Formula:          dist ~ type
-    ## Data: mod_df
-    ## 
-    ##      AIC      BIC   logLik deviance df.resid 
-    ##    135.0    138.8    -63.5    127.0       15 
-    ## 
-    ## 
-    ## Dispersion estimate for gaussian family (sigma^2): 46.8 
-    ## 
-    ## Conditional model:
-    ##             Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)   13.500      3.419   3.948 7.88e-05 ***
-    ## typeFM_real   -1.900      4.046  -0.470    0.639    
-    ## typeMM_real   -3.900      4.588  -0.850    0.395    
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ##  contrast          estimate   SE df t.ratio p.value
-    ##  FF_real - FM_real      1.9 4.05 15   0.470  0.6454
-    ##  FF_real - MM_real      3.9 4.59 15   0.850  0.6454
-    ##  FM_real - MM_real      2.0 3.75 15   0.534  0.6454
+    ##  FF_real - FM_real     2.25 3.89 15   0.578  0.6633
+    ##  FF_real - MM_real     3.85 4.41 15   0.873  0.6633
+    ##  FM_real - MM_real     1.60 3.60 15   0.444  0.6633
     ## 
     ## P value adjustment: fdr method for 3 tests
 

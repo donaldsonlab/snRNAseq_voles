@@ -1,13 +1,16 @@
 ---
 title: "Hotspot for paper"
-output: html_notebook
+author: "Liza Brusman"
+date: "2024-02-26"
+output: github_document
 ---
 
-This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
+```
 
-Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
 
-```{r}
+```{r, message=FALSE}
 suppressPackageStartupMessages(library("dplyr"))
 suppressPackageStartupMessages(library("tidyr"))
 suppressPackageStartupMessages(library("svMisc"))
@@ -38,7 +41,7 @@ source("hotspot.R")
 
 import module data and metadata
 ```{r}
-all_cells <- read.csv("docs/ani_mod_scores_allcells.csv")
+all_cells <- read.csv("docs/ani_mod_scores_allcells_lognorm_counts.csv") %>% filter(animal != "4967")
 
 metadata <- read.csv("../../docs/seq_beh_metadata.csv") %>% process_metadata() %>% group_level()
 ```
@@ -77,11 +80,11 @@ for (mod in modules) {
 ```{r}
 setwd("output/")
 for (mod in "Module.6") {
-  corr_plot(merged_data, color = "deeppink4", font_size = 20, save = TRUE)
+  corr_plot(merged_data, color = "deeppink4", font_size = 20, save = FALSE)
 }
 
 for (mod in "Module.11") {
-  corr_plot(merged_data, color = "chartreuse4", font_size = 20, save = TRUE)
+  corr_plot(merged_data, color = "chartreuse4", font_size = 20, save = FALSE)
 }
 ```
 
@@ -95,8 +98,8 @@ for (mod in modules) {
 
 all_plt <- grid.arrange(grobs = plt_list, nrow = 6)
 
-setwd("output/")
-ggsave("all_module_corrs.pdf", all_plt, width = 16, height = 16, units = "in")
+# setwd("output/")
+# ggsave("all_module_corrs.pdf", all_plt, width = 16, height = 16, units = "in")
 ```
 
 
@@ -115,8 +118,8 @@ plot_rank(all_dists_df)
 
 all_plt <- grid.arrange(grobs = plt_list, nrow = 6)
 
-setwd("output/")
-ggsave("all_module_dists.pdf", all_plt, width = 18, height = 18, units = "in")
+# setwd("output/")
+# ggsave("all_module_dists.pdf", all_plt, width = 18, height = 18, units = "in")
 
 ```
 euclidean distances between partners
@@ -142,7 +145,7 @@ for (mod in modules) {
 
 all_plt <- grid.arrange(grobs = plt_list, nrow = 6)
 
-ggsave("all_module_euclidean_dists.pdf", all_plt, width = 18, height = 18, units = "in")
+# ggsave("all_module_euclidean_dists.pdf", all_plt, width = 18, height = 18, units = "in")
 ```
 plot euclidean distances by pair type
 ```{r}
@@ -154,8 +157,8 @@ for (mod in modules) {
 
 all_plt <- grid.arrange(grobs = plt_list, nrow = 6)
 
-setwd("output/")
-ggsave("all_module_euclidean_dists_by_pairtype.pdf", all_plt, width = 18, height = 18, units = "in")
+# setwd("output/")
+# ggsave("all_module_euclidean_dists_by_pairtype.pdf", all_plt, width = 18, height = 18, units = "in")
 ```
 
 summary stats from hotspot mods
@@ -194,8 +197,8 @@ for (mod in modules) {
 }
 ```
 ```{r}
-setwd("output/")
-write.csv(all_contrasts, "all_glm_posthocs_module_expr.csv")
+# setwd("output/")
+# write.csv(all_contrasts, "all_glm_posthocs_module_expr.csv")
 ```
 stats for rank distances between groups
 ```{r}
@@ -212,9 +215,9 @@ for (mod in modules) {
   fit <- glmmTMB(dist~type, data = mod_df)
   print(summary(fit))
   
-  simres <- simulateResiduals(fit)
-  plot(simres, title = mod)
-  
+  # simres <- simulateResiduals(fit)
+  # plot(simres, title = mod)
+
   EMM <- emmeans(fit, ~ type)
   coef <- contrast(EMM, "pairwise")
   coef2 <- summary(coef, adjust = "fdr") #[["sex*SSOS"]])
@@ -227,8 +230,8 @@ for (mod in modules) {
 }
 ```
 ```{r}
-setwd("output/")
-write.csv(all_contrasts_dists, "glm_posthocs_rank_group_comparisons.csv")
+# setwd("output/")
+# write.csv(all_contrasts_dists, "glm_posthocs_rank_group_comparisons.csv")
 ```
 
 wilcox.test for euclidean dists
@@ -245,8 +248,8 @@ for (mod in modules) {
 }
 ```
 ```{r}
-setwd("output/")
-write.csv(all_euclidean_stats, "euclidean_dists_fakereal_wilcoxtest.csv")
+# setwd("output/")
+# write.csv(all_euclidean_stats, "euclidean_dists_fakereal_wilcoxtest.csv")
 ```
 
 
@@ -264,9 +267,14 @@ for (mod in modules) {
 }
 ```
 ```{r}
-setwd("output/")
-write.csv(corr_stats_df, "module_partner_corrs_stats.csv")
+# setwd("output/")
+# write.csv(corr_stats_df, "module_partner_corrs_stats.csv")
 ```
+
+```{r}
+sessionInfo()
+```
+
 
 
 Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
