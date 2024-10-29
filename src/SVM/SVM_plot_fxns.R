@@ -87,7 +87,12 @@ plot_ridgeline <- function(df, grouping = FALSE, save = FALSE) {
     stat_density_ridges(
       aes(x = norm_classes, fill = ClustFct, color = group), 
       alpha = 0.8, from = 0, to = 1, scale = 1.5, size = 1.5,
-      quantile_lines = TRUE, quantiles = 2) +
+      quantile_lines = TRUE, quantiles = 2,
+      # # if you want points on ridgeline plots
+      # jittered_points = TRUE,
+      # position = position_points_jitter(width = 0, height = 0),
+      # point_shape = '|', point_size = 5, point_alpha = 1, alpha = 0.7
+      ) +
     geom_vline(xintercept = 0.026, color = "red", linetype = "dashed", size = 1.5) + #for chance line
     scale_color_manual(values = c("self"="black",
                                   "partner"="gray50",
@@ -100,12 +105,11 @@ plot_ridgeline <- function(df, grouping = FALSE, save = FALSE) {
   print(p)
   
   if (save == TRUE) {
-    setwd("output/")
     if ("self" %in% df$group) {
-      ggsave("ridgeline_withself_chanceline.pdf", p, width = 8, height = 8, units = "in", device = "pdf", bg = "white")
+      ggsave("ridgeline_withself_chanceline_points.pdf", p, width = 8, height = 8, units = "in", device = "pdf", bg = "white")
     }
     else {
-      ggsave("ridgeline_excludeself_chanceline.pdf", p, width = 8, height = 8, units = "in", device = "pdf", bg = "white")
+      ggsave("ridgeline_excludeself_chanceline_points.pdf", p, width = 8, height = 8, units = "in", device = "pdf", bg = "white")
     }
   }
   
