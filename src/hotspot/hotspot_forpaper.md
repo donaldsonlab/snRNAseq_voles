@@ -1,30 +1,30 @@
 Hotspot for paper
 ================
 Liza Brusman
-2024-02-26
+2024-10-29
 
 ``` r
-suppressPackageStartupMessages(library("dplyr"))
-suppressPackageStartupMessages(library("tidyr"))
-suppressPackageStartupMessages(library("svMisc"))
-suppressPackageStartupMessages(library("cowplot"))
-suppressPackageStartupMessages(library("ggplot2"))
-suppressPackageStartupMessages(library("pheatmap"))
-suppressPackageStartupMessages(library("reshape2"))
-suppressPackageStartupMessages(library("gridExtra"))
-suppressPackageStartupMessages(library("RColorBrewer"))
-suppressPackageStartupMessages(library("ivmte"))
-suppressPackageStartupMessages(library("viridis"))
-suppressPackageStartupMessages(library("palettetown"))
-suppressPackageStartupMessages(library("ComplexHeatmap"))
-suppressPackageStartupMessages(library(corrplot))
-suppressPackageStartupMessages(library(Hmisc))
-suppressPackageStartupMessages(library('corrr'))
-suppressPackageStartupMessages(library(ggcorrplot))
-suppressPackageStartupMessages(library("FactoMineR"))
-suppressPackageStartupMessages(library(stringr))
-suppressPackageStartupMessages(library(ggpubr))
-suppressPackageStartupMessages(library(ComplexHeatmap))
+library(dplyr)
+library(tidyr)
+library(svMisc)
+library(cowplot)
+library(ggplot2)
+library(pheatmap)
+library(reshape2)
+library(gridExtra)
+library(RColorBrewer)
+library(ivmte)
+library(viridis)
+library(palettetown)
+library(ComplexHeatmap)
+library(corrplot)
+library(Hmisc)
+library(corrr)
+library(ggcorrplot)
+library(FactoMineR)
+library(stringr)
+library(ggpubr)
+library(ComplexHeatmap)
 library(glmmTMB)
 library(DHARMa)
 library(emmeans)
@@ -68,13 +68,393 @@ import seurat object
 SCT_norm <- readRDS("../seurat_clustering/output/SCT_norm.rds")
 ```
 
+outlier test for modules 5 and 12 (and Module 14 to check for new
+significance) <https://statsandr.com/blog/outliers-detection-in-r/>
+
+``` r
+ggplot(merged_data, aes(x = Group, y = Module.5)) + geom_boxplot()
+```
+
+![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+
+``` r
+out <- boxplot.stats(merged_data$Module.5)$out
+out_ind <- which(merged_data$Module.5 %in% c(out))
+out_ind
+```
+
+    ## [1] 15 20 22
+
+``` r
+#try outlier test using percentiles
+lower_bound <- quantile(merged_data$Module.5, 0.025)
+lower_bound
+```
+
+    ##        2.5% 
+    ## 0.008785572
+
+``` r
+upper_bound <- quantile(merged_data$Module.5, 0.975)
+upper_bound
+```
+
+    ##      97.5% 
+    ## 0.01453385
+
+``` r
+#for just SS females
+SS_F <- merged_data %>% filter(Group == "F_SS")
+ggplot(SS_F, aes(x = Group, y = Module.5)) + geom_boxplot()
+```
+
+![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-7-2.png)<!-- -->
+
+``` r
+out <- boxplot.stats(SS_F$Module.5)$out
+out_ind <- which(SS_F$Module.5 %in% c(out))
+out_ind
+```
+
+    ## [1] 5
+
+``` r
+#try outlier test using percentiles
+lower_bound <- quantile(SS_F$Module.5, 0.025)
+lower_bound
+```
+
+    ##       2.5% 
+    ## 0.01087455
+
+``` r
+upper_bound <- quantile(SS_F$Module.5, 0.975)
+upper_bound
+```
+
+    ##      97.5% 
+    ## 0.01724762
+
+``` r
+print("Module.5")
+```
+
+    ## [1] "Module.5"
+
+``` r
+for_mod5 <- merged_data %>% filter(Module.5 != out)
+
+my_comparisons <- list(c("F_SS", "F_OS"),
+                         c("F_SS", "M_SS"),
+                         c("M_SS", "M_OS"),
+                         c("F_OS", "M_OS"))
+plt <- ggplot(for_mod5, aes_string(x = "Group", y = "Module.5", color = "Group",
+                                 fill = "Group", alpha = 0.8)) +
+    geom_violin(lwd = 0.5) +
+    geom_point(position = position_dodge(width = 0.75),
+               color = "slategrey", size = 2, alpha = 1) +
+    # stat_compare_means(comparisons = my_comparisons,
+    #                    paired = FALSE, method = "wilcox.test") +
+
+    scale_fill_manual(values = c("F_SS" = "mediumpurple",
+                                 "F_OS" = "darkorchid4",
+                                 "M_SS" = "lightseagreen",
+                                 "M_OS" = "deepskyblue4")) +
+    scale_color_manual(values = c("F_SS" = "mediumpurple",
+                                  "F_OS" = "darkorchid4",
+                                  "M_SS" = "lightseagreen",
+                                  "M_OS" = "deepskyblue4")) +
+
+    ylab("Module Score") +
+    ggtitle("Module.5") +
+    theme_classic() +
+    theme(text = element_text(size = 40))
+  print(plt)
+```
+
+![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-7-3.png)<!-- -->
+
+``` r
+fit <- glmmTMB(Module.5~Group, data = for_mod5)
+print(summary(fit))
+```
+
+    ##  Family: gaussian  ( identity )
+    ## Formula:          Module.5 ~ Group
+    ## Data: for_mod5
+    ## 
+    ##      AIC      BIC   logLik deviance df.resid 
+    ##   -392.8   -384.6    201.4   -402.8       33 
+    ## 
+    ## 
+    ## Dispersion estimate for gaussian family (sigma^2): 1.46e-06 
+    ## 
+    ## Conditional model:
+    ##               Estimate Std. Error z value Pr(>|z|)    
+    ## (Intercept)  0.0115841  0.0004565  25.376   <2e-16 ***
+    ## GroupF_OS   -0.0011267  0.0005839  -1.929   0.0537 .  
+    ## GroupM_SS   -0.0012597  0.0005952  -2.116   0.0343 *  
+    ## GroupM_OS   -0.0011599  0.0005952  -1.949   0.0513 .  
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+``` r
+  # simres <- simulateResiduals(fit)
+  # plot(simres, title = mod)
+
+EMM <- emmeans(fit, ~ Group)
+coef <- contrast(EMM, "pairwise")[c(1, 2, 5, 6)]
+coef2 <- summary(coef, adjust = "fdr") #[["sex*SSOS"]])
+print(coef2)
+```
+
+    ##  contrast     estimate       SE df t.ratio p.value
+    ##  F_SS - F_OS  1.13e-03 0.000584 33   1.929  0.1246
+    ##  F_SS - M_SS  1.26e-03 0.000595 33   2.116  0.1246
+    ##  F_OS - M_OS  3.32e-05 0.000528 33   0.063  0.9502
+    ##  M_SS - M_OS -9.97e-05 0.000540 33  -0.185  0.9502
+    ## 
+    ## P value adjustment: fdr method for 4 tests
+
+``` r
+##for moudle.12
+print("Module.12")
+```
+
+    ## [1] "Module.12"
+
+``` r
+#for just SS females
+SS_F <- merged_data %>% filter(Group == "F_SS")
+ggplot(SS_F, aes(x = Group, y = Module.12)) + geom_boxplot()
+```
+
+![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-7-4.png)<!-- -->
+
+``` r
+out <- boxplot.stats(SS_F$Module.12)$out
+out_ind <- which(SS_F$Module.12 %in% c(out))
+out_ind
+```
+
+    ## [1] 5
+
+``` r
+#try outlier test using percentiles
+lower_bound <- quantile(SS_F$Module.12, 0.025)
+lower_bound
+```
+
+    ##       2.5% 
+    ## 0.07407496
+
+``` r
+upper_bound <- quantile(SS_F$Module.12, 0.975)
+upper_bound
+```
+
+    ##     97.5% 
+    ## 0.1111612
+
+``` r
+for_mod12 <- merged_data %>% filter(Module.12 != out)
+
+my_comparisons <- list(c("F_SS", "F_OS"),
+                         c("F_SS", "M_SS"),
+                         c("M_SS", "M_OS"),
+                         c("F_OS", "M_OS"))
+plt <- ggplot(for_mod12, aes_string(x = "Group", y = "Module.12", color = "Group",
+                                 fill = "Group", alpha = 0.8)) +
+    geom_violin(lwd = 0.5) +
+    geom_point(position = position_dodge(width = 0.75),
+               color = "slategrey", size = 2, alpha = 1) +
+    # stat_compare_means(comparisons = my_comparisons,
+                       # paired = FALSE, method = "wilcox.test") +
+
+    scale_fill_manual(values = c("F_SS" = "mediumpurple",
+                                 "F_OS" = "darkorchid4",
+                                 "M_SS" = "lightseagreen",
+                                 "M_OS" = "deepskyblue4")) +
+    scale_color_manual(values = c("F_SS" = "mediumpurple",
+                                  "F_OS" = "darkorchid4",
+                                  "M_SS" = "lightseagreen",
+                                  "M_OS" = "deepskyblue4")) +
+
+    ylab("Module Score") +
+    ggtitle("Module.12") +
+    theme_classic() +
+    theme(text = element_text(size = 40))
+  print(plt)
+```
+
+![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-7-5.png)<!-- -->
+
+``` r
+fit <- glmmTMB(Module.12~Group, data = for_mod12)
+print(summary(fit))
+```
+
+    ##  Family: gaussian  ( identity )
+    ## Formula:          Module.12 ~ Group
+    ## Data: for_mod12
+    ## 
+    ##      AIC      BIC   logLik deviance df.resid 
+    ##   -266.8   -258.6    138.4   -276.8       33 
+    ## 
+    ## 
+    ## Dispersion estimate for gaussian family (sigma^2): 4.02e-05 
+    ## 
+    ## Conditional model:
+    ##              Estimate Std. Error z value Pr(>|z|)    
+    ## (Intercept)  0.080966   0.002396   33.79   <2e-16 ***
+    ## GroupF_OS   -0.005221   0.003065   -1.70   0.0885 .  
+    ## GroupM_SS   -0.007011   0.003124   -2.24   0.0248 *  
+    ## GroupM_OS   -0.006226   0.003124   -1.99   0.0462 *  
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+``` r
+  # simres <- simulateResiduals(fit)
+  # plot(simres, title = mod)
+
+EMM <- emmeans(fit, ~ Group)
+coef <- contrast(EMM, "pairwise")[c(1, 2, 5, 6)]
+coef2 <- summary(coef, adjust = "fdr") #[["sex*SSOS"]])
+print(coef2)
+```
+
+    ##  contrast     estimate      SE df t.ratio p.value
+    ##  F_SS - F_OS  0.005221 0.00306 33   1.703  0.1958
+    ##  F_SS - M_SS  0.007011 0.00312 33   2.244  0.1266
+    ##  F_OS - M_OS  0.001006 0.00277 33   0.363  0.7837
+    ##  M_SS - M_OS -0.000785 0.00283 33  -0.277  0.7837
+    ## 
+    ## P value adjustment: fdr method for 4 tests
+
+``` r
+##just look for Module-14
+print("Module.14")
+```
+
+    ## [1] "Module.14"
+
+``` r
+#for just SS females
+SS_F <- merged_data %>% filter(Group == "F_SS")
+ggplot(SS_F, aes(x = Group, y = Module.14)) + geom_boxplot()
+```
+
+![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-7-6.png)<!-- -->
+
+``` r
+out <- boxplot.stats(SS_F$Module.14)$out
+out_ind <- which(SS_F$Module.14 %in% c(out))
+out_ind
+```
+
+    ## [1] 5 7
+
+``` r
+#try outlier test using percentiles
+lower_bound <- quantile(SS_F$Module.14, 0.025)
+lower_bound
+```
+
+    ##      2.5% 
+    ## 0.1275934
+
+``` r
+upper_bound <- quantile(SS_F$Module.14, 0.975)
+upper_bound
+```
+
+    ##     97.5% 
+    ## 0.1791689
+
+``` r
+for_mod14 <- merged_data %>% filter(!Module.14 %in% out)
+
+my_comparisons <- list(c("F_SS", "F_OS"),
+                         c("F_SS", "M_SS"),
+                         c("M_SS", "M_OS"),
+                         c("F_OS", "M_OS"))
+plt <- ggplot(for_mod14, aes_string(x = "Group", y = "Module.14", color = "Group",
+                                 fill = "Group", alpha = 0.8)) +
+    geom_violin(lwd = 0.5) +
+    geom_point(position = position_dodge(width = 0.75),
+               color = "slategrey", size = 2, alpha = 1) +
+    # stat_compare_means(comparisons = my_comparisons,
+                       # paired = FALSE, method = "wilcox.test") +
+
+    scale_fill_manual(values = c("F_SS" = "mediumpurple",
+                                 "F_OS" = "darkorchid4",
+                                 "M_SS" = "lightseagreen",
+                                 "M_OS" = "deepskyblue4")) +
+    scale_color_manual(values = c("F_SS" = "mediumpurple",
+                                  "F_OS" = "darkorchid4",
+                                  "M_SS" = "lightseagreen",
+                                  "M_OS" = "deepskyblue4")) +
+
+    ylab("Module Score") +
+    ggtitle("Module.14") +
+    theme_classic() +
+    theme(text = element_text(size = 40))
+  print(plt)
+```
+
+![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-7-7.png)<!-- -->
+
+``` r
+fit <- glmmTMB(Module.14~Group, data = for_mod14)
+print(summary(fit))
+```
+
+    ##  Family: gaussian  ( identity )
+    ## Formula:          Module.14 ~ Group
+    ## Data: for_mod14
+    ## 
+    ##      AIC      BIC   logLik deviance df.resid 
+    ##   -192.6   -184.6    101.3   -202.6       32 
+    ## 
+    ## 
+    ## Dispersion estimate for gaussian family (sigma^2): 0.000245 
+    ## 
+    ## Conditional model:
+    ##             Estimate Std. Error z value Pr(>|z|)    
+    ## (Intercept) 0.150707   0.006391  23.582   <2e-16 ***
+    ## GroupF_OS   0.019908   0.007945   2.506   0.0122 *  
+    ## GroupM_SS   0.010956   0.008084   1.355   0.1753    
+    ## GroupM_OS   0.014312   0.008084   1.770   0.0767 .  
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+``` r
+  # simres <- simulateResiduals(fit)
+  # plot(simres, title = mod)
+
+EMM <- emmeans(fit, ~ Group)
+coef <- contrast(EMM, "pairwise")[c(1, 2, 5, 6)]
+coef2 <- summary(coef, adjust = "fdr") #[["sex*SSOS"]])
+print(coef2)
+```
+
+    ##  contrast    estimate      SE df t.ratio p.value
+    ##  F_SS - F_OS -0.01991 0.00794 32  -2.506  0.0700
+    ##  F_SS - M_SS -0.01096 0.00808 32  -1.355  0.3696
+    ##  F_OS - M_OS  0.00560 0.00684 32   0.818  0.5590
+    ##  M_SS - M_OS -0.00336 0.00700 32  -0.479  0.6350
+    ## 
+    ## P value adjustment: fdr method for 4 tests
+
 ``` r
 for (mod in modules) {
   violin(merged_data, save = FALSE)
 }
 ```
 
-![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-7-2.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-7-3.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-7-4.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-7-5.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-7-6.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-7-7.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-7-8.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-7-9.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-7-10.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-7-11.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-7-12.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-7-13.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-7-14.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-7-15.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-7-16.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-7-17.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-7-18.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-7-19.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-7-20.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-7-21.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-7-22.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-7-23.png)<!-- -->
+![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-8-2.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-8-3.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-8-4.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-8-5.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-8-6.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-8-7.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-8-8.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-8-9.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-8-10.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-8-11.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-8-12.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-8-13.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-8-14.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-8-15.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-8-16.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-8-17.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-8-18.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-8-19.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-8-20.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-8-21.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-8-22.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-8-23.png)<!-- -->
+
+correlation plots
 
 ``` r
 setwd("output/")
@@ -83,12 +463,9 @@ for (mod in "Module.6") {
 }
 ```
 
-    ## [1] 0.09520588
-    ## [1] 0.1290499
-
     ## `geom_smooth()` using formula = 'y ~ x'
 
-![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
 ``` r
 for (mod in "Module.11") {
@@ -96,12 +473,10 @@ for (mod in "Module.11") {
 }
 ```
 
-    ## [1] 0.04101589
-    ## [1] 0.05913558
-
     ## `geom_smooth()` using formula = 'y ~ x'
 
-![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-8-2.png)<!-- -->
+![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-9-2.png)<!-- -->
+facet corr plots for easier manipulation in illustrator
 
 ``` r
 plt_list <- list()
@@ -113,95 +488,95 @@ for (mod in modules) {
 
     ## `geom_smooth()` using formula = 'y ~ x'
 
-![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
     ## `geom_smooth()` using formula = 'y ~ x'
 
-![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-9-2.png)<!-- -->
+![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-2.png)<!-- -->
 
     ## `geom_smooth()` using formula = 'y ~ x'
 
-![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-9-3.png)<!-- -->
+![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-3.png)<!-- -->
 
     ## `geom_smooth()` using formula = 'y ~ x'
 
-![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-9-4.png)<!-- -->
+![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-4.png)<!-- -->
 
     ## `geom_smooth()` using formula = 'y ~ x'
 
-![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-9-5.png)<!-- -->
+![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-5.png)<!-- -->
 
     ## `geom_smooth()` using formula = 'y ~ x'
 
-![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-9-6.png)<!-- -->
+![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-6.png)<!-- -->
 
     ## `geom_smooth()` using formula = 'y ~ x'
 
-![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-9-7.png)<!-- -->
+![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-7.png)<!-- -->
 
     ## `geom_smooth()` using formula = 'y ~ x'
 
-![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-9-8.png)<!-- -->
+![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-8.png)<!-- -->
 
     ## `geom_smooth()` using formula = 'y ~ x'
 
-![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-9-9.png)<!-- -->
+![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-9.png)<!-- -->
 
     ## `geom_smooth()` using formula = 'y ~ x'
 
-![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-9-10.png)<!-- -->
+![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-10.png)<!-- -->
 
     ## `geom_smooth()` using formula = 'y ~ x'
 
-![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-9-11.png)<!-- -->
+![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-11.png)<!-- -->
 
     ## `geom_smooth()` using formula = 'y ~ x'
 
-![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-9-12.png)<!-- -->
+![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-12.png)<!-- -->
 
     ## `geom_smooth()` using formula = 'y ~ x'
 
-![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-9-13.png)<!-- -->
+![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-13.png)<!-- -->
 
     ## `geom_smooth()` using formula = 'y ~ x'
 
-![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-9-14.png)<!-- -->
+![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-14.png)<!-- -->
 
     ## `geom_smooth()` using formula = 'y ~ x'
 
-![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-9-15.png)<!-- -->
+![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-15.png)<!-- -->
 
     ## `geom_smooth()` using formula = 'y ~ x'
 
-![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-9-16.png)<!-- -->
+![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-16.png)<!-- -->
 
     ## `geom_smooth()` using formula = 'y ~ x'
 
-![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-9-17.png)<!-- -->
+![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-17.png)<!-- -->
 
     ## `geom_smooth()` using formula = 'y ~ x'
 
-![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-9-18.png)<!-- -->
+![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-18.png)<!-- -->
 
     ## `geom_smooth()` using formula = 'y ~ x'
 
-![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-9-19.png)<!-- -->
+![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-19.png)<!-- -->
 
     ## `geom_smooth()` using formula = 'y ~ x'
 
-![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-9-20.png)<!-- -->
+![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-20.png)<!-- -->
 
     ## `geom_smooth()` using formula = 'y ~ x'
 
-![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-9-21.png)<!-- -->
+![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-21.png)<!-- -->
 
     ## `geom_smooth()` using formula = 'y ~ x'
 
-![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-9-22.png)<!-- -->
+![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-22.png)<!-- -->
 
     ## `geom_smooth()` using formula = 'y ~ x'
 
-![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-9-23.png)<!-- -->
+![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-23.png)<!-- -->
 
 ``` r
 all_plt <- grid.arrange(grobs = plt_list, nrow = 6)
@@ -231,12 +606,14 @@ all_plt <- grid.arrange(grobs = plt_list, nrow = 6)
     ## `geom_smooth()` using formula = 'y ~ x'
     ## `geom_smooth()` using formula = 'y ~ x'
 
-![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-9-24.png)<!-- -->
+![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-24.png)<!-- -->
 
 ``` r
 # setwd("output/")
 # ggsave("all_module_corrs.pdf", all_plt, width = 16, height = 16, units = "in")
 ```
+
+make a plot of all between-partner rank distances separated by pair type
 
 ``` r
 all_dists_df <- make_dist_df(pairs, type, fake_real, dist, Module)
@@ -250,26 +627,26 @@ for (mod in modules) {
   }
 ```
 
-![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-2.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-3.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-4.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-5.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-6.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-7.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-8.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-9.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-10.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-11.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-12.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-13.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-14.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-15.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-16.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-17.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-18.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-19.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-20.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-21.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-22.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-23.png)<!-- -->
+![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-11-2.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-11-3.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-11-4.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-11-5.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-11-6.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-11-7.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-11-8.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-11-9.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-11-10.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-11-11.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-11-12.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-11-13.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-11-14.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-11-15.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-11-16.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-11-17.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-11-18.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-11-19.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-11-20.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-11-21.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-11-22.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-11-23.png)<!-- -->
 
 ``` r
 plot_rank(all_dists_df)
 ```
 
-![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-24.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-25.png)<!-- -->
+![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-11-24.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-11-25.png)<!-- -->
 
 ``` r
 all_plt <- grid.arrange(grobs = plt_list, nrow = 6)
 ```
 
-![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-10-26.png)<!-- -->
+![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-11-26.png)<!-- -->
 
 ``` r
 # setwd("output/")
 # ggsave("all_module_dists.pdf", all_plt, width = 18, height = 18, units = "in")
 ```
 
-euclidean distances between partners
+euclidean distances between partners and all non-partner pairs
 
 ``` r
 fake_pairs <- get_fake_pairs(merged_data)
@@ -478,13 +855,13 @@ for (mod in modules) {
 }
 ```
 
-![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-12-2.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-12-3.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-12-4.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-12-5.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-12-6.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-12-7.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-12-8.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-12-9.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-12-10.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-12-11.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-12-12.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-12-13.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-12-14.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-12-15.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-12-16.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-12-17.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-12-18.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-12-19.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-12-20.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-12-21.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-12-22.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-12-23.png)<!-- -->
+![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-2.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-3.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-4.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-5.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-6.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-7.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-8.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-9.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-10.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-11.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-12.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-13.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-14.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-15.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-16.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-17.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-18.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-19.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-20.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-21.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-22.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-23.png)<!-- -->
 
 ``` r
 all_plt <- grid.arrange(grobs = plt_list, nrow = 6)
 ```
 
-![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-12-24.png)<!-- -->
+![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-24.png)<!-- -->
 
 ``` r
 # ggsave("all_module_euclidean_dists.pdf", all_plt, width = 18, height = 18, units = "in")
@@ -500,13 +877,13 @@ for (mod in modules) {
 }
 ```
 
-![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-2.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-3.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-4.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-5.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-6.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-7.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-8.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-9.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-10.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-11.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-12.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-13.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-14.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-15.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-16.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-17.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-18.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-19.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-20.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-21.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-22.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-23.png)<!-- -->
+![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-14-2.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-14-3.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-14-4.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-14-5.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-14-6.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-14-7.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-14-8.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-14-9.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-14-10.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-14-11.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-14-12.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-14-13.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-14-14.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-14-15.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-14-16.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-14-17.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-14-18.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-14-19.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-14-20.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-14-21.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-14-22.png)<!-- -->![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-14-23.png)<!-- -->
 
 ``` r
 all_plt <- grid.arrange(grobs = plt_list, nrow = 6)
 ```
 
-![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-13-24.png)<!-- -->
+![](hotspot_forpaper_files/figure-gfm/unnamed-chunk-14-24.png)<!-- -->
 
 ``` r
 # setwd("output/")
@@ -519,7 +896,7 @@ summary stats from hotspot mods
 summs <- mod_genes %>% group_by(Module) %>% summarise(n_genes = n())
 ```
 
-GLM for module expression
+GLM for module expression by sex and SS_OS
 
 ``` r
 all_contrasts <- data.frame(contrast = character(), 
@@ -1740,7 +2117,7 @@ sessionInfo()
 
     ## R version 4.2.2 (2022-10-31 ucrt)
     ## Platform: x86_64-w64-mingw32/x64 (64-bit)
-    ## Running under: Windows 10 x64 (build 22621)
+    ## Running under: Windows 10 x64 (build 22631)
     ## 
     ## Matrix products: default
     ## 
@@ -1801,7 +2178,7 @@ sessionInfo()
     ##  [94] compiler_4.2.2         tibble_3.2.1           KernSmooth_2.23-20    
     ##  [97] crayon_1.5.2           minqa_1.2.5            htmltools_0.5.5       
     ## [100] mgcv_1.8-42            later_1.3.0            Formula_1.2-5         
-    ## [103] MASS_7.3-58.3          boot_1.3-28.1          Matrix_1.6-1          
+    ## [103] MASS_7.3-58.3          boot_1.3-28.1          Matrix_1.6-2          
     ## [106] car_3.1-2              cli_3.6.0              parallel_4.2.2        
     ## [109] igraph_1.4.2           pkgconfig_2.0.3        flashClust_1.01-2     
     ## [112] numDeriv_2016.8-1.1    foreign_0.8-84         sp_1.6-0              
