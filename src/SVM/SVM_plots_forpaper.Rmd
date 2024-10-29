@@ -1,11 +1,14 @@
 ---
 title: "SVM plots"
-output: html_notebook
+author: "Liza Brusman"
+date: "2024-10-29"
+output: github_document
 ---
 
-This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
 
-Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
+```
 
 ```{r, message = FALSE}
 library(dplyr)
@@ -27,6 +30,7 @@ metadata
 ```{r}
 metadata <- read.csv("../../docs/seq_beh_metadata.csv")
 metadata$Group <- paste(metadata$sex, metadata$SS_OS, sep = "_")
+metadata <- metadata %>% filter(!animal %in% c("4918", "4967"))
 ```
 
 
@@ -50,7 +54,7 @@ for SVMs that do not include self
 exclude_self <- read.csv("output/all_svm_combined_excludeself_200cells.csv") %>% filter(animal == Var1)
 ```
 
-
+put clusters in right order and assign colors
 ```{r}
 f.levels <- c('Drd1Pdyn', 'Drd1PdynOprm1', 'Drd1Penk', 'Drd2Penk', 'Drd2NoPenk', 
                                       'GABAergicNeurons', 'Dlx2ImmatureNeurons', 'SstNpyInterneurons', 
@@ -60,18 +64,18 @@ f.levels <- c('Drd1Pdyn', 'Drd1PdynOprm1', 'Drd1Penk', 'Drd2Penk', 'Drd2NoPenk',
 clust_cols <- c("Drd1Pdyn" = "#304880", "Drd1PdynOprm1" = "#4898D0", "Drd1Penk" = "#88C0F0", "Drd2Penk" = "#9060A0", "Drd2NoPenk" = "#C078C0", "GABAergicNeurons" = "#389078", "Dlx2ImmatureNeurons" = "#70A830", "SstNpyInterneurons" = "#98D048", "PvalbInterneurons" = "#60D0A0", "CholinergicInterneurons" = "#80E8C0", "MatureOligos" = "#783028", "ImmatureOligos" = "#B82820", "Astrocytes" = "#D04058", "Microglia" = "#F87878")
 ```
 
-
+process df into format for ridgeline plots
 ```{r}
 with_self2 <- process_df_withself(with_self)
 ```
 
 
-plot using function
+plot ridgeline plot
 ```{r}
 plot_ridgeline(with_self2, save = FALSE)
 ```
-STAT TESTS
-for with self - self vs. partner vs. other GLM
+STAT TESTS - GLM
+for with self - self vs. partner vs. other
 ```{r}
 with_self_stats <- GLM_SVM(with_self2)
 
@@ -79,21 +83,21 @@ with_self_stats <- GLM_SVM(with_self2)
 # write.csv(with_self_stats, "glm_svm_with_self_groups_ordbeta.csv")
 ```
 
-widen dataframe
+widen dataframe for other analyses later
 ```{r}
 with_self_wide <- widen_df_withself(with_self2)
 ```
 
-for excluding self:
-
+process df for excluding self
 ```{r}
 exclude_self2 <- process_df_excludeself(exclude_self)
 ```
+plot exclude self ridgeline
 ```{r}
 plot_ridgeline(exclude_self2, save = FALSE)
 ```
 
-stats: exclude self GLM
+GLM stats: exclude self
 ```{r}
 exclude_self_stats <- GLM_SVM(exclude_self2)
 
@@ -102,46 +106,50 @@ exclude_self_stats <- GLM_SVM(exclude_self2)
 
 ```
 
-exclude self wide
+exclude self widened df
 ```{r}
 exclude_self_wide <- widen_df_excludeself(exclude_self2)
 ```
-by pairing type - with self
+
+plot ridgelines by pairing type - with self
 ```{r}
 pair_types <- unique(data$pair_type)
 for (type in pair_types) {
+  print(type)
   plot_ridgeline(with_self2, grouping = "pair_type", save = FALSE)
 
 }
-
 ```
-by pair type without self
+ridgeline by pair type without self
 ```{r}
 pair_types <- unique(data$pair_type)
 for (type in pair_types) {
+  print(type)
   plot_ridgeline(exclude_self2, grouping = "pair_type", save = FALSE)
   
 }
 ```
-by cohort with self
+ridgeline by cohort with self
 ```{r}
 cohs <- unique(data$beh_cohort)
 for (type in cohs) {
+  print(type)
   plot_ridgeline(with_self2, grouping = "beh_cohort", save = FALSE)
   
 }
 ```
-by cohort exclude self
+ridgelines by cohort exclude self
 ```{r}
 cohs <- unique(data$beh_cohort)
 for (type in cohs) {
+  print(type)
   plot_ridgeline(exclude_self2, grouping = "beh_cohort", save = FALSE)
   
 }
 
 ```
 
-directly compare pairing types
+directly compare pairing types. each point in these plots is the percentage of classification for one animal to one other animal
 ```{r}
 exclude_self2$group_type <- paste(exclude_self2$pair_type, exclude_self2$group, sep = "_")
 
@@ -164,7 +172,6 @@ correlation between partners in partner % classification
 plot_SVM_corrs(exclude_self_wide, save = FALSE)
 ```
 
-
 get out some summary stats for exclude self data
 ```{r}
 summ_stats <- exclude_self_wide %>% group_by(Cluster) %>% summarise(mean_partner_pct = mean(partner.pct), avg_cells_tested = mean(partner+other))
@@ -174,6 +181,7 @@ ggplot(summ_stats, aes(x = avg_cells_tested, y = mean_partner_pct, color = Clust
   geom_smooth(method = "lm") +
   scale_color_manual(values = clust_cols)
 
+#here i correlated the mean partner % vs. the number of cells tested
 rcorr(summ_stats$mean_partner_pct, summ_stats$avg_cells_tested)
 ```
 
@@ -181,6 +189,7 @@ get some summary stats for with self data
 ```{r}
 summ_stats <- with_self_wide %>% group_by(Cluster) %>% summarise(mean_self_pct = mean(self.pct), avg_cells_tested = mean(self+partner+other))
 
+#here i correlated the self classifications to the number of cells tested. this is highly correlated
 cor_test <- rcorr(summ_stats$mean_self_pct, summ_stats$avg_cells_tested, type = "spearman")
 print(cor_test)
 
@@ -191,45 +200,290 @@ ggplot(summ_stats, aes(x = avg_cells_tested, y = mean_self_pct, color = Cluster)
 ```
 
 
-
-self vs. chance
+self vs. chance - one-sample t-test vs. 1/38 (correct classification by random)
 ```{r}
 vs_chance_df <- data.frame()
 
 for (clust in f.levels) {
   clust_df <- with_self2 %>% filter(Cluster == clust) %>% filter(group == "self")
   
-  oneway <- t.test(clust_df$norm_classes, mu = 1/38)
+  onesamp <- t.test(clust_df$norm_classes, mu = 1/38)
   # print(oneway)
   
   stats_df <- data.frame(Cluster = clust,
-                        T_val = oneway$statistic[1],
-                        p.value = oneway$p.value,
-                        test = "oneway t-test")
+                        T_val = onesamp$statistic[1],
+                        p.value = onesamp$p.value,
+                        test = "onesamp t-test")
   
   vs_chance_df <- rbind(vs_chance_df, stats_df)
   
 }
 ```
-partner vs. chance
+
+partner vs. chance for exclude self
 ```{r}
 vs_chance_df_exclude <- data.frame()
 
 for (clust in f.levels) {
   clust_df <- exclude_self2 %>% filter(Cluster == clust) %>% filter(group == "partner")
   
-  oneway <- t.test(clust_df$norm_classes, mu = 1/37)
+  onesamp <- t.test(clust_df$norm_classes, mu = 1/37)
   # print(oneway)
   
   stats_df <- data.frame(Cluster = clust,
-                        T_val = oneway$statistic[1],
-                        p.value = oneway$p.value,
-                        test = "oneway t-test")
+                        T_val = onesamp$statistic[1],
+                        p.value = onesamp$p.value,
+                        test = "onesamp t-test")
   
   vs_chance_df_exclude <- rbind(vs_chance_df_exclude, stats_df)
   
 }
 ```
+
+
+look at classifications for same sex, same cohort, same pairing type, relatedness, etc.
+basically - what other factors are at play other than partner ID?
+```{r}
+exclude_self_newclass <- exclude_self2
+exclude_self_newclass <- exclude_self_newclass %>% merge(metadata, on = "animal")
+
+#basically just creating named lists to match to predicted animal
+sex_vec <- metadata$sex
+names(sex_vec) <- metadata$animal
+
+exclude_self_newclass$y_pred <- as.character(exclude_self_newclass$y_pred)
+exclude_self_newclass$same_opp_sex <- if_else(exclude_self_newclass$sex == sex_vec[exclude_self_newclass$y_pred], "same", "different")
+
+coh_vec <- metadata$beh_cohort
+names(coh_vec) <- metadata$animal
+exclude_self_newclass$same_diff_coh <- if_else(exclude_self_newclass$beh_cohort == coh_vec[exclude_self_newclass$y_pred], "same", "different")
+
+type_vec <- metadata$pair_type
+names(type_vec) <- metadata$animal
+exclude_self_newclass$same_diff_type <- if_else(exclude_self_newclass$pair_type == type_vec[exclude_self_newclass$y_pred], "same", "different")
+
+group_vec <- metadata$Group
+names(group_vec) <- metadata$animal
+exclude_self_newclass$same_diff_group <- if_else(exclude_self_newclass$Group == group_vec[exclude_self_newclass$y_pred], "same", "different")
+
+parent_vec <- metadata$parents
+names(parent_vec) <- metadata$animal
+exclude_self_newclass$same_diff_parents <- if_else(exclude_self_newclass$parents == parent_vec[exclude_self_newclass$y_pred], "same", "different")
+```
+
+only look at "other" classifications
+```{r}
+exclude_self_newclass_other <- exclude_self_newclass %>% filter(group == "other")
+norm_to_other_class <- exclude_self_newclass_other %>% group_by(Cluster, animal) %>% summarise(sum_other_classes = sum(Freq))
+same_sex_norm <- exclude_self_newclass_other %>% group_by(Cluster, animal, same_opp_sex) %>% summarise(classes = sum(Freq))
+same_sex_norm$metric <- "sex"
+same_sex_norm <- same_sex_norm %>% rename("same_diff" = "same_opp_sex")
+same_sex_norm <- same_sex_norm %>% merge(norm_to_other_class, on = "animal")
+
+same_coh_norm <- exclude_self_newclass_other %>% group_by(Cluster, animal, same_diff_coh) %>% summarise(classes = sum(Freq))
+same_coh_norm$metric <- "cohort"
+same_coh_norm <- same_coh_norm %>% rename("same_diff" = "same_diff_coh")
+same_coh_norm <- same_coh_norm %>% merge(norm_to_other_class, on = "animal")
+
+same_type_norm <- exclude_self_newclass_other %>% group_by(Cluster, animal, same_diff_type) %>% summarise(classes = sum(Freq))
+same_type_norm$metric <- "pair_type"
+same_type_norm <- same_type_norm %>% rename("same_diff" = "same_diff_type")
+same_type_norm <- same_type_norm %>% merge(norm_to_other_class, on = "animal")
+
+
+same_group_norm <- exclude_self_newclass_other %>% group_by(Cluster, animal, same_diff_group) %>% summarise(classes = sum(Freq))
+same_group_norm$metric <- "group"
+same_group_norm <- same_group_norm %>% rename("same_diff" = "same_diff_group")
+same_group_norm <- same_group_norm %>% merge(norm_to_other_class, on = "animal")
+
+
+same_parents_norm <- exclude_self_newclass_other %>% group_by(Cluster, animal, same_diff_parents) %>% summarise(classes = sum(Freq))
+same_parents_norm$metric <- "parents"
+same_parents_norm <- same_parents_norm %>% rename("same_diff" = "same_diff_parents")
+same_parents_norm <- same_parents_norm %>% merge(norm_to_other_class, on = "animal")
+
+
+# norm_to_other_class <- norm_to_other_class %>% merge(same_sex_norm, on = "animal") %>% merge(same_coh_norm, on = "animal") %>% merge(same_type_norm, on = "animal") %>% merge(same_group_norm, on = "animal") %>% merge(same_parents_norm, on = "animal")
+norm_to_other_class <- rbind(same_sex_norm, same_coh_norm, same_type_norm, same_group_norm, same_parents_norm)
+norm_to_other_class$pcts <- norm_to_other_class$classes/norm_to_other_class$sum_other_classes
+```
+
+normalize to the percent of classifications that are for "other" (i.e. what percent of "other" classifications?)
+```{r}
+norm_to_other_pct <- exclude_self_newclass_other %>% group_by(Cluster, animal) %>% summarise(sum_other_classes = sum(Freq))
+exclude_self_newclass_other <- merge(exclude_self_newclass_other, norm_to_other_pct, on = "animal")
+exclude_self_newclass_other$norm_to_other <- exclude_self_newclass_other$Freq/exclude_self_newclass_other$sum_other_classes
+```
+
+plot misclassification allocations by cluster
+```{r, fig.width = 16}
+clust_cols <- c("Drd1Pdyn" = "#304880",
+                "Drd1PdynOprm1" = "#4898D0",
+                "Drd1Penk" = "#88C0F0",
+                "Drd2Penk" = "#9060A0",
+                "Drd2NoPenk" = "#C078C0",
+                "GABAergicNeurons" = "#389078",
+                "Dlx2ImmatureNeurons" = "#70A830",
+                "SstNpyInterneurons" = "#98D048",
+                "PvalbInterneurons" = "#60D0A0",
+                "CholinergicInterneurons" = "#80E8C0",
+                "MatureOligos" = "#783028",
+                "ImmatureOligos" = "#B82820",
+                "Astrocytes" = "#D04058",
+                "Microglia" = "#F87878")
+
+clust_cols_new <- clust_cols
+names(clust_cols_new) <- paste0(names(clust_cols), "_same")
+clust_cols_light <- colorspace::lighten(clust_cols, 0.6)
+clust_cols_light <- rep("gray69", 14)
+names(clust_cols_light) <- paste0(names(clust_cols), "_different")
+
+idx <- order(c(seq_along(clust_cols_new), seq_along(clust_cols_light)))
+all_clust_cols <- (c(clust_cols_new,clust_cols_light))[idx]
+
+newclass_long_pcts <- exclude_self_newclass_other %>% pivot_longer(cols = c("same_opp_sex", "same_diff_coh", "same_diff_type", "same_diff_group", "same_diff_parents"))
+
+newclass_long_pcts$value <- factor(newclass_long_pcts$value, levels = c("same", "different"))
+newclass_long_pcts$Cluster <- factor(newclass_long_pcts$Cluster, levels = f.levels)
+newclass_long_pcts$Cluster_samediff <- paste0(newclass_long_pcts$Cluster, "_", newclass_long_pcts$value)
+p <- ggplot(newclass_long_pcts, aes(x = factor(Cluster_samediff, levels = names(all_clust_cols)), y = norm_to_other*100, color = Cluster_samediff, fill = Cluster_samediff, alpha = 0.8)) +
+  # geom_boxplot() +
+  # geom_point(position = position_jitterdodge(jitter.width = 0, dodge.width = 0.9)) +
+  geom_jitter(size = 0.5, width = 0.2) +
+  scale_color_manual(values = all_clust_cols) +
+  scale_fill_manual(values = all_clust_cols) +
+  xlab("Group") +
+  ylab("% of Classifications") +
+  theme_classic()
+
+p2 <- p + facet_wrap(~ name, nrow = 5)
+print(p2)
+
+# setwd("output/new_plots/")
+# ggsave("by_metrics_animal_by_animal.pdf", p2)
+```
+
+plot allocations of misclassifications as barplot
+```{r}
+plt_list <- list()
+for (m in c("same_diff_coh", "same_diff_group", "same_diff_type", "same_diff_parents", "same_opp_sex")) {
+  print(m)
+  #first find expected values
+  metadata2 <- metadata
+  if (m == "same_opp_sex") {
+    metadata2 <- metadata2 %>% rename(m = "sex")
+  }
+  else if (m == "same_diff_group") {
+    metadata2 <- metadata2 %>% rename(m = "Group")
+  }
+  else if(m == "same_diff_type") {
+    metadata2 <- metadata2 %>% rename(m = "pair_type")
+  }
+  else if(m == "same_diff_parents") {
+    metadata2 <- metadata2 %>% rename(m = "parents")
+  }
+  else if(m == "same_diff_coh") {
+    metadata2 <- metadata2 %>% rename(m = "beh_cohort")
+  }
+  
+  #get weighted avg expected value
+  m_summ <- metadata2 %>% summarise(n_metric = n(), .by = m)
+  m_summ$norm_pct <- m_summ$n_metric/38
+  weighted_mean <- weighted.mean(m_summ$norm_pct, m_summ$n_metric)
+  print(weighted_mean)
+  
+  #make df to sum all other classifications, don't group by cluster first
+  test_m <- exclude_self_newclass_other %>% group_by_at(c("animal", "group", m)) %>% summarise_at(.vars = "Freq", .funs = sum)
+  test_m <- test_m %>% rename("same_diff" = m)
+  test_m2 <- test_m %>% group_by_at(c("animal", "group")) %>% summarise(total_other_classifications = sum(Freq)) %>% merge(test_m, on = "animal") %>% filter(same_diff == "same")
+  test_m2$pct_same_classes <- test_m2$Freq/test_m2$total_other_classifications
+  test_m2$metric <- m
+  
+  #one sample ttest vs. chance line
+  one_samp_ttest <- t.test(test_m2$pct_same_classes*100, mu = weighted_mean*100)
+  print(one_samp_ttest)
+  
+  p3 <- ggplot(test_m2, aes(x = metric, y = pct_same_classes*100)) + 
+    geom_bar(stat = "summary", fun = "mean", color = "black", fill = "white") +
+    stat_summary(
+    fun.data = mean_se, fun.args = list(mult = 1), geom = "errorbar", color = "black", #fun.args = list(mult = 1), 
+    position = position_dodge(0.8), width = 0.2, linewidth = 0.8
+      ) +
+    geom_jitter(height=0, width = 0.2, color = "black", alpha = 0.6, stroke = NA) +
+    geom_hline(yintercept = weighted_mean*100, color = "red", linetype = "dashed") +
+    ylim(0, 100) +
+    theme_classic()
+    print(p3)
+  
+  plt_list[[m]] <- p3
+}
+
+p4 <- grid.arrange(grobs = plt_list, nrow = 1)
+print(p4)
+
+setwd("output/new_plots/")
+# ggsave("by_metrics_percent_cells_no_partner_combine_clusts_bars_se_noclustcollapsefirst.pdf", p4, width = 7, height = 7)
+```
+
+try a way to visualize only means (from data normalized to "other" counts)
+this sets up dataframe to make a bubble plot
+```{r}
+norm_to_other_class2 <- norm_to_other_class %>% filter(same_diff == "same")
+
+norm_for_summary <- norm_to_other_class2 %>% group_by(Cluster, metric) %>% summarise(mean_same_pct = mean(pcts, na.rm = TRUE))
+```
+
+bubble plot with normalized avg expected values
+colored bubble indicates true mean
+black line indicates expected (weighted mean)
+```{r, fig.width = 8, fig.height = 6}
+norm_wts <- data.frame()
+for (m in unique(norm_for_summary$metric)) {
+  print(m)
+  m_df <- norm_for_summary %>% filter(metric == m)
+  
+  metadata2 <- metadata %>% filter(!animal %in% c("4918", "4967"))
+  if (m == "cohort") {
+    metadata2 <- metadata2 %>% rename(m = "beh_cohort")
+  }
+  
+  else if (m == "group") {
+    metadata2 <- metadata2 %>% rename(m = "Group")
+  }
+  
+  #get weighted avg expected value
+  m_summ <- metadata2 %>% summarise(n_metric = n(), .by = m)
+  m_summ$norm_pct <- m_summ$n_metric/38
+  weighted_mean <- weighted.mean(m_summ$norm_pct, m_summ$n_metric)
+  
+  mini_df <- data.frame("metric" = m, "weighted_mean" = weighted_mean)
+  norm_wts <- rbind(norm_wts, mini_df)
+}
+
+norm_for_summary_weighted <- norm_for_summary %>% merge(norm_wts, on = "metric")
+p <- ggplot(norm_for_summary_weighted, aes(x = metric, y = factor(Cluster, levels = rev(f.levels)), fill = Cluster, color = Cluster)) +
+  geom_point(aes(size = mean_same_pct), alpha = 1, shape = 21) +
+  geom_point(aes(size = weighted_mean), alpha = 1, shape = 1, color = "black") +
+  # geom_point(aes(size = 1), alpha = 1, shape = 1, color = "black") + #if you want 100% circle
+  scale_size_continuous(limits = c(0, 1), range = c(0, 10)) +
+  scale_fill_manual(values = clust_cols, guide = FALSE) +
+  scale_color_manual(values = clust_cols, guide = FALSE) +
+  theme(panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA, size = 1.2))
+
+print(p)
+
+# setwd("output/new_plots/")
+# ggsave("SVM_metric_classifications_bubbleplot_normalized_expected.pdf", p)
+
+```
+
+
+```{r}
+sessionInfo()
+```
+
+
+
 
 
 Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
