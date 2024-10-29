@@ -1,9 +1,15 @@
-SVM_animalID
-================
-Liza Brusman
-2024-10-29
+---
+title: "SVM_animalID"
+author: "Liza Brusman"
+date: "2024-10-29"
+output: github_document
+---
 
-``` r
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
+```
+
+```{r, message = FALSE}
 library(Seurat)
 library(dplyr)
 library(ggplot2)
@@ -17,14 +23,12 @@ library(ggridges)
 ```
 
 read in seurat object
-
-``` r
+```{r}
 SCT_norm <- readRDS("../seurat_clustering/output/SCT_norm.rds")
 ```
 
 import metadata
-
-``` r
+```{r}
 meta <- read.csv("../../docs/seq_beh_metadata.csv")
 
 meta.pair <- pivot_wider(meta, id_cols = c(pair, pair_type, SS_OS), names_from = color, values_from = c(LT_phuddle, ST_phuddle))
@@ -34,10 +38,9 @@ meta.pair <- meta.pair %>% arrange(pair)
 rownames(meta.pair) <- meta.pair$pair
 ```
 
-see if SVM can identify individual animals this is for the “with self”
-SVMs
-
-``` r
+see if SVM can identify individual animals
+this is for the "with self" SVMs
+```{r}
 setwd("output/")
 
 #cluster names
@@ -129,8 +132,7 @@ clust.pred.df.ani$Accuracy = 1 - clust.pred.df.ani$Misclass
 ```
 
 rearranging classification data into one df
-
-``` r
+```{r}
 all.classifications <- data.frame(Cluster_Module = character(), Var1 = character(), y_pred = character(), Freq = numeric())
 
 for (i in names(cm.list.ani)) {
@@ -145,16 +147,15 @@ for (i in names(cm.list.ani)) {
 ```
 
 save SVM output
-
-``` r
+```{r}
 setwd("G:/My Drive/pateiv/seq_analysis/snseq_analysis/SVM/")
 write.csv(all.classifications, "ani_pairwise_classifications_withself_only_mod_genes.csv")
+
 ```
 
-train on 37 animals, test on held-out animal this is for the “exclude
-self” SVMs
-
-``` r
+train on 37 animals, test on held-out animal
+this is for the "exclude self" SVMs
+```{r}
 setwd("output/")
 clust.pred.ani.exclude <- data.frame(Cluster = character(), animal = character(), prediction = character(), Misclass = numeric())
 diag.list.ani <- list()
@@ -233,11 +234,13 @@ for (clust in clusters) {
 
   }
 }
+  
+
 ```
 
 save SVM output
-
-``` r
+```{r}
 setwd("output/")
 write.csv(indiv.classifications, "all_pairwise_classifications_excludeself_200cells.csv")
 ```
+
