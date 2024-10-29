@@ -23,6 +23,7 @@ library(palettetown)
 library(gridExtra)
 library(glmmTMB)
 library(DHARMa)
+library(emmeans)
 ```
 
 import previously saved seurat object
@@ -179,7 +180,7 @@ props <- props*100
 props <- props[,c("F_SS", "F_OS", "M_SS", "M_OS")]
 
 # Open a pdf file
-pdf("output/stackedbar.pdf", width = 8, height = 10)
+# pdf("output/stackedbar.pdf", width = 8, height = 10)
 #set font parameters for barplot
 par(cex.axis=2, cex.lab=3)
 # Get the stacked barplot
@@ -196,7 +197,7 @@ barplot(props,
         # legend=rownames(props)
         )
 #close pdf file
-dev.off()
+# dev.off()
 
 ```
 import metadata
@@ -236,7 +237,7 @@ for (clust in order) {
   p <- mini_df %>% mutate(Group = fct_relevel(Group, "F_SS", "F_OS", "M_SS", "M_OS")) %>% ggplot(aes(x = Group, y = Freq, fill = Group, color = Group, alpha = 0.8)) + 
     geom_violin(lwd = 0.75) + 
     geom_point(position = position_dodge(width = 0.75), color = "slategrey", size = 2, alpha = 1) + 
-    stat_compare_means(comparisons= my_comparisons, paired = FALSE) +
+    # stat_compare_means(comparisons= my_comparisons, paired = FALSE) +
     scale_fill_manual(values = c("F_SS" = "mediumpurple",
                                 "F_OS"="darkorchid4",
                                 "M_SS"="lightseagreen",
@@ -333,6 +334,155 @@ for (clust in order) {
   all_contrasts <- rbind(all_contrasts, mini.df)
   
 }
+```
+
+proportions of clusters within MSNs
+```{r}
+MSN_clusts <- c("Drd1Pdyn", "Drd1PdynOprm1", "Drd1Penk", "Drd2Penk", "Drd2NoPenk")
+# MSN_clusts <- c("ImmatureOligos", "MatureOligos")
+
+
+Idents(SCT_norm) <- "new_clusts"
+SCT_MSN <- subset(SCT_norm, idents = MSN_clusts)
+
+props_perani <- prop.table(table(Idents(SCT_MSN), SCT_MSN$Ani), margin = 2)
+#x100 to get percentages
+props_perani <- props_perani*100
+#reorder columns to plot in correct order
+# props <- props[,c("F_SS", "F_OS", "M_SS", "M_OS")]
+
+props_perani <- props_perani %>% as.data.frame
+props_perani <- props_perani %>% rename("animal" = "Var2")
+
+props_perani <- merge(props_perani, metadata, on = "animal")
+props_perani$Group <- paste(props_perani$sex, props_perani$SS_OS, sep = "_")
+
+
+#plot
+#look at percentages by cluster
+# my_comparisons <- list( c("F_SS", "F_OS"), c("M_SS", "M_OS"), c("F_OS", "M_OS"), c("F_SS", "M_SS"))
+plt_list <- list()
+for (clust in MSN_clusts) {
+  print(clust)
+  mini_df <- props_perani %>% filter(Var1 == clust)
+  p <- mini_df %>% mutate(Group = fct_relevel(Group, "F_SS", "F_OS", "M_SS", "M_OS")) %>% ggplot(aes(x = Group, y = Freq, fill = Group, color = Group, alpha = 0.8)) + 
+    geom_violin(lwd = 0.75) + 
+    geom_point(position = position_dodge(width = 0.75), color = "slategrey", size = 1, alpha = 1) + 
+    # stat_compare_means(comparisons= my_comparisons, paired = FALSE) +
+    scale_fill_manual(values = c("F_SS" = "mediumpurple",
+                                "F_OS"="darkorchid4",
+                                "M_SS"="lightseagreen",
+                                "M_OS"="deepskyblue4")) +
+    scale_color_manual(values = c("F_SS" = "mediumpurple",
+                                "F_OS"="darkorchid4",
+                                "M_SS"="lightseagreen",
+                                "M_OS"="deepskyblue4")) +
+    ylim(0, NA) +
+    ggtitle(clust) + 
+    ylab("Percent of Cells") +
+    xlab("Group") +
+    theme_classic() +
+    theme(text = element_text(size = 8))# + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+    print(p)
+
+  plt_list[[clust]] <- p
+}
+
+# #do stats
+# props_perani_wide <- props_perani %>% pivot_wider(id_cols = c("animal", "sex", "SS_OS"), names_from = "Var1", values_from = "Freq")
+# all_contrasts <- data.frame(contrast = character(), 
+#                             estimate = numeric(), 
+#                             SE = numeric(), 
+#                             df = numeric(), 
+#                             t.ratio = numeric(), 
+#                             p.value = numeric(), 
+#                             Module = character())
+# 
+# for (clust in MSN_clusts) {
+#   form <- formula(paste0(clust, "~sex*SS_OS"))
+#   fit <- glmmTMB(form, data = props_perani_wide)
+#   print(summary(fit))
+#   
+#   # simres <- simulateResiduals(fit)
+#   # plot(simres, title = clust)
+#   
+#   EMM <- emmeans(fit, ~ sex*SS_OS)
+#   # print(summary(pairwise_comparisons))
+#   coef <- contrast(EMM, "pairwise")[c(1, 2, 5, 6)]
+#   coef2 <- summary(coef, adjust = "fdr")
+#   print(coef2)
+#   mini.df <- coef2 %>% as.data.frame()
+#   mini.df$Cluster <- clust
+#   
+#   all_contrasts <- rbind(all_contrasts, mini.df)
+#   
+# }
+
+```
+proportion of all MSNs
+```{r}
+MSN_clusts <- c("Drd1Pdyn", "Drd1PdynOprm1", "Drd1Penk", "Drd2Penk", "Drd2NoPenk")
+
+SCT_norm$MSN_or_no <- if_else(SCT_norm$new_clusts %in% MSN_clusts, "MSN", "not_MSN")
+
+Idents(SCT_norm) <- "MSN_or_no"
+
+props_perani <- prop.table(table(Idents(SCT_norm), SCT_norm$Ani), margin = 2)
+#x100 to get percentages
+props_perani <- props_perani*100
+#reorder columns to plot in correct order
+# props <- props[,c("F_SS", "F_OS", "M_SS", "M_OS")]
+
+props_perani <- props_perani %>% as.data.frame
+props_perani <- props_perani %>% rename("animal" = "Var2")
+
+props_perani <- merge(props_perani, metadata, on = "animal")
+props_perani$Group <- paste(props_perani$sex, props_perani$SS_OS, sep = "_")
+
+
+mini_df <- props_perani %>% filter(Var1 == "MSN")
+p <- mini_df %>% mutate(Group = fct_relevel(Group, "F_SS", "F_OS", "M_SS", "M_OS")) %>% ggplot(aes(x = Group, y = Freq, fill = Group, color = Group, alpha = 0.8)) + 
+    geom_violin(lwd = 0.75) + 
+    geom_point(position = position_dodge(width = 0.75), color = "slategrey", size = 1, alpha = 1) + 
+    scale_fill_manual(values = c("F_SS" = "mediumpurple",
+                                "F_OS"="darkorchid4",
+                                "M_SS"="lightseagreen",
+                                "M_OS"="deepskyblue4")) +
+    scale_color_manual(values = c("F_SS" = "mediumpurple",
+                                "F_OS"="darkorchid4",
+                                "M_SS"="lightseagreen",
+                                "M_OS"="deepskyblue4")) +
+    ylim(0, NA) +
+    ylab("Percent of Cells") +
+    xlab("Group") +
+    theme_classic() +
+    theme(text = element_text(size = 8))# + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+print(p)
+
+ggsave("output/all_msn_props.pdf", p)
+
+
+# #do stats
+# props_perani_wide <- props_perani %>% pivot_wider(id_cols = c("animal", "sex", "SS_OS"), names_from = "Var1", values_from = "Freq")
+# all_contrasts <- data.frame(contrast = character(), 
+#                             estimate = numeric(), 
+#                             SE = numeric(), 
+#                             df = numeric(), 
+#                             t.ratio = numeric(), 
+#                             p.value = numeric(), 
+#                             Module = character())
+# 
+# form <- formula(paste0("MSN~sex*SS_OS"))
+# fit <- glmmTMB(form, data = props_perani_wide)
+# print(summary(fit))
+# 
+# EMM <- emmeans(fit, ~ sex*SS_OS)
+# # print(summary(pairwise_comparisons))
+# coef <- contrast(EMM, "pairwise")[c(1, 2, 5, 6)]
+# coef2 <- summary(coef, adjust = "fdr")
+# print(coef2)
+
+
 ```
 
 sessioninfo
