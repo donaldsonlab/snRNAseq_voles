@@ -1,7 +1,7 @@
 ---
 title: "Hotspot for paper"
 author: "Liza Brusman"
-date: "2024-02-26"
+date: "2024-10-29"
 output: github_document
 ---
 
@@ -11,27 +11,27 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
 
 
 ```{r, message=FALSE}
-suppressPackageStartupMessages(library("dplyr"))
-suppressPackageStartupMessages(library("tidyr"))
-suppressPackageStartupMessages(library("svMisc"))
-suppressPackageStartupMessages(library("cowplot"))
-suppressPackageStartupMessages(library("ggplot2"))
-suppressPackageStartupMessages(library("pheatmap"))
-suppressPackageStartupMessages(library("reshape2"))
-suppressPackageStartupMessages(library("gridExtra"))
-suppressPackageStartupMessages(library("RColorBrewer"))
-suppressPackageStartupMessages(library("ivmte"))
-suppressPackageStartupMessages(library("viridis"))
-suppressPackageStartupMessages(library("palettetown"))
-suppressPackageStartupMessages(library("ComplexHeatmap"))
-suppressPackageStartupMessages(library(corrplot))
-suppressPackageStartupMessages(library(Hmisc))
-suppressPackageStartupMessages(library('corrr'))
-suppressPackageStartupMessages(library(ggcorrplot))
-suppressPackageStartupMessages(library("FactoMineR"))
-suppressPackageStartupMessages(library(stringr))
-suppressPackageStartupMessages(library(ggpubr))
-suppressPackageStartupMessages(library(ComplexHeatmap))
+library(dplyr)
+library(tidyr)
+library(svMisc)
+library(cowplot)
+library(ggplot2)
+library(pheatmap)
+library(reshape2)
+library(gridExtra)
+library(RColorBrewer)
+library(ivmte)
+library(viridis)
+library(palettetown)
+library(ComplexHeatmap)
+library(corrplot)
+library(Hmisc)
+library(corrr)
+library(ggcorrplot)
+library(FactoMineR)
+library(stringr)
+library(ggpubr)
+library(ComplexHeatmap)
 library(glmmTMB)
 library(DHARMa)
 library(emmeans)
@@ -49,7 +49,6 @@ merge meta and module data
 ```{r}
 merged_data <- merge(all_cells, metadata, on = "animal")
 ```
-
 
 ```{r}
 modules <- get_modules(merged_data)
@@ -72,11 +71,197 @@ import seurat object
 SCT_norm <- readRDS("../seurat_clustering/output/SCT_norm.rds")
 ```
 
+outlier test for modules 5 and 12 (and Module 14 to check for new significance)
+https://statsandr.com/blog/outliers-detection-in-r/
+```{r}
+ggplot(merged_data, aes(x = Group, y = Module.5)) + geom_boxplot()
+out <- boxplot.stats(merged_data$Module.5)$out
+out_ind <- which(merged_data$Module.5 %in% c(out))
+out_ind
+
+#try outlier test using percentiles
+lower_bound <- quantile(merged_data$Module.5, 0.025)
+lower_bound
+upper_bound <- quantile(merged_data$Module.5, 0.975)
+upper_bound
+
+#for just SS females
+SS_F <- merged_data %>% filter(Group == "F_SS")
+ggplot(SS_F, aes(x = Group, y = Module.5)) + geom_boxplot()
+out <- boxplot.stats(SS_F$Module.5)$out
+out_ind <- which(SS_F$Module.5 %in% c(out))
+out_ind
+
+#try outlier test using percentiles
+lower_bound <- quantile(SS_F$Module.5, 0.025)
+lower_bound
+upper_bound <- quantile(SS_F$Module.5, 0.975)
+upper_bound
+
+print("Module.5")
+for_mod5 <- merged_data %>% filter(Module.5 != out)
+
+my_comparisons <- list(c("F_SS", "F_OS"),
+                         c("F_SS", "M_SS"),
+                         c("M_SS", "M_OS"),
+                         c("F_OS", "M_OS"))
+plt <- ggplot(for_mod5, aes_string(x = "Group", y = "Module.5", color = "Group",
+                                 fill = "Group", alpha = 0.8)) +
+    geom_violin(lwd = 0.5) +
+    geom_point(position = position_dodge(width = 0.75),
+               color = "slategrey", size = 2, alpha = 1) +
+    # stat_compare_means(comparisons = my_comparisons,
+    #                    paired = FALSE, method = "wilcox.test") +
+
+    scale_fill_manual(values = c("F_SS" = "mediumpurple",
+                                 "F_OS" = "darkorchid4",
+                                 "M_SS" = "lightseagreen",
+                                 "M_OS" = "deepskyblue4")) +
+    scale_color_manual(values = c("F_SS" = "mediumpurple",
+                                  "F_OS" = "darkorchid4",
+                                  "M_SS" = "lightseagreen",
+                                  "M_OS" = "deepskyblue4")) +
+
+    ylab("Module Score") +
+    ggtitle("Module.5") +
+    theme_classic() +
+    theme(text = element_text(size = 40))
+  print(plt)
+  
+fit <- glmmTMB(Module.5~Group, data = for_mod5)
+print(summary(fit))
+  
+  # simres <- simulateResiduals(fit)
+  # plot(simres, title = mod)
+
+EMM <- emmeans(fit, ~ Group)
+coef <- contrast(EMM, "pairwise")[c(1, 2, 5, 6)]
+coef2 <- summary(coef, adjust = "fdr") #[["sex*SSOS"]])
+print(coef2)
+
+
+##for moudle.12
+print("Module.12")
+
+#for just SS females
+SS_F <- merged_data %>% filter(Group == "F_SS")
+ggplot(SS_F, aes(x = Group, y = Module.12)) + geom_boxplot()
+out <- boxplot.stats(SS_F$Module.12)$out
+out_ind <- which(SS_F$Module.12 %in% c(out))
+out_ind
+
+#try outlier test using percentiles
+lower_bound <- quantile(SS_F$Module.12, 0.025)
+lower_bound
+upper_bound <- quantile(SS_F$Module.12, 0.975)
+upper_bound
+
+for_mod12 <- merged_data %>% filter(Module.12 != out)
+
+my_comparisons <- list(c("F_SS", "F_OS"),
+                         c("F_SS", "M_SS"),
+                         c("M_SS", "M_OS"),
+                         c("F_OS", "M_OS"))
+plt <- ggplot(for_mod12, aes_string(x = "Group", y = "Module.12", color = "Group",
+                                 fill = "Group", alpha = 0.8)) +
+    geom_violin(lwd = 0.5) +
+    geom_point(position = position_dodge(width = 0.75),
+               color = "slategrey", size = 2, alpha = 1) +
+    # stat_compare_means(comparisons = my_comparisons,
+                       # paired = FALSE, method = "wilcox.test") +
+
+    scale_fill_manual(values = c("F_SS" = "mediumpurple",
+                                 "F_OS" = "darkorchid4",
+                                 "M_SS" = "lightseagreen",
+                                 "M_OS" = "deepskyblue4")) +
+    scale_color_manual(values = c("F_SS" = "mediumpurple",
+                                  "F_OS" = "darkorchid4",
+                                  "M_SS" = "lightseagreen",
+                                  "M_OS" = "deepskyblue4")) +
+
+    ylab("Module Score") +
+    ggtitle("Module.12") +
+    theme_classic() +
+    theme(text = element_text(size = 40))
+  print(plt)
+  
+fit <- glmmTMB(Module.12~Group, data = for_mod12)
+print(summary(fit))
+  
+  # simres <- simulateResiduals(fit)
+  # plot(simres, title = mod)
+
+EMM <- emmeans(fit, ~ Group)
+coef <- contrast(EMM, "pairwise")[c(1, 2, 5, 6)]
+coef2 <- summary(coef, adjust = "fdr") #[["sex*SSOS"]])
+print(coef2)
+
+
+##just look for Module-14
+print("Module.14")
+
+#for just SS females
+SS_F <- merged_data %>% filter(Group == "F_SS")
+ggplot(SS_F, aes(x = Group, y = Module.14)) + geom_boxplot()
+out <- boxplot.stats(SS_F$Module.14)$out
+out_ind <- which(SS_F$Module.14 %in% c(out))
+out_ind
+
+#try outlier test using percentiles
+lower_bound <- quantile(SS_F$Module.14, 0.025)
+lower_bound
+upper_bound <- quantile(SS_F$Module.14, 0.975)
+upper_bound
+
+for_mod14 <- merged_data %>% filter(!Module.14 %in% out)
+
+my_comparisons <- list(c("F_SS", "F_OS"),
+                         c("F_SS", "M_SS"),
+                         c("M_SS", "M_OS"),
+                         c("F_OS", "M_OS"))
+plt <- ggplot(for_mod14, aes_string(x = "Group", y = "Module.14", color = "Group",
+                                 fill = "Group", alpha = 0.8)) +
+    geom_violin(lwd = 0.5) +
+    geom_point(position = position_dodge(width = 0.75),
+               color = "slategrey", size = 2, alpha = 1) +
+    # stat_compare_means(comparisons = my_comparisons,
+                       # paired = FALSE, method = "wilcox.test") +
+
+    scale_fill_manual(values = c("F_SS" = "mediumpurple",
+                                 "F_OS" = "darkorchid4",
+                                 "M_SS" = "lightseagreen",
+                                 "M_OS" = "deepskyblue4")) +
+    scale_color_manual(values = c("F_SS" = "mediumpurple",
+                                  "F_OS" = "darkorchid4",
+                                  "M_SS" = "lightseagreen",
+                                  "M_OS" = "deepskyblue4")) +
+
+    ylab("Module Score") +
+    ggtitle("Module.14") +
+    theme_classic() +
+    theme(text = element_text(size = 40))
+  print(plt)
+  
+fit <- glmmTMB(Module.14~Group, data = for_mod14)
+print(summary(fit))
+  
+  # simres <- simulateResiduals(fit)
+  # plot(simres, title = mod)
+
+EMM <- emmeans(fit, ~ Group)
+coef <- contrast(EMM, "pairwise")[c(1, 2, 5, 6)]
+coef2 <- summary(coef, adjust = "fdr") #[["sex*SSOS"]])
+print(coef2)
+```
+
+
 ```{r}
 for (mod in modules) {
   violin(merged_data, save = FALSE)
 }
 ```
+
+correlation plots
 ```{r}
 setwd("output/")
 for (mod in "Module.6") {
@@ -87,7 +272,7 @@ for (mod in "Module.11") {
   corr_plot(merged_data, color = "chartreuse4", font_size = 20, save = FALSE)
 }
 ```
-
+facet corr plots for easier manipulation in illustrator
 ```{r}
 plt_list <- list()
 for (mod in modules) {
@@ -102,7 +287,7 @@ all_plt <- grid.arrange(grobs = plt_list, nrow = 6)
 # ggsave("all_module_corrs.pdf", all_plt, width = 16, height = 16, units = "in")
 ```
 
-
+make a plot of all between-partner rank distances separated by pair type
 ```{r}
 all_dists_df <- make_dist_df(pairs, type, fake_real, dist, Module)
 plt_list <- list()
@@ -122,7 +307,8 @@ all_plt <- grid.arrange(grobs = plt_list, nrow = 6)
 # ggsave("all_module_dists.pdf", all_plt, width = 18, height = 18, units = "in")
 
 ```
-euclidean distances between partners
+
+euclidean distances between partners and all non-partner pairs
 ```{r}
 fake_pairs <- get_fake_pairs(merged_data)
 
@@ -166,7 +352,7 @@ summary stats from hotspot mods
 summs <- mod_genes %>% group_by(Module) %>% summarise(n_genes = n())
 ```
 
-GLM for module expression
+GLM for module expression by sex and SS_OS
 ```{r}
 all_contrasts <- data.frame(contrast = character(), 
                             estimate = numeric(), 

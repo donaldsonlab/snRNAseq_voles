@@ -319,8 +319,8 @@ violin <- function(data, save) {
     geom_violin(lwd = 0.5) +
     geom_point(position = position_dodge(width = 0.75),
                color = "slategrey", size = 2, alpha = 1) +
-    stat_compare_means(comparisons = my_comparisons,
-                       paired = FALSE, method = "wilcox.test") +
+    # stat_compare_means(comparisons = my_comparisons,
+                       # paired = FALSE, method = "wilcox.test") +
 
     scale_fill_manual(values = c("F_SS" = "mediumpurple",
                                  "F_OS" = "darkorchid4",
@@ -512,9 +512,9 @@ corr_plot <- function(data, color = "black", font_size, save = FALSE) {
                                   names_from = "color", values_from = mod)
   data <- data %>% filter(animal != "4918")
   min_val <- min(data[,mod])
-  print(min_val)
+  # print(min_val)
   max_val <- max(data[,mod])
-  print(max_val)
+  # print(max_val)
   
   cor <- partner_correlation(data_wide)
   
@@ -533,8 +533,9 @@ corr_plot <- function(data, color = "black", font_size, save = FALSE) {
     ggtitle(paste0(mod, " ", lab)) +
     xlab("Partner 1 Avg. Gene Expr.") +
     ylab("Partner 2 Avg. Gene Expr.") +
-    coord_fixed(xlim = c(min_val, max_val), ylim = c(min_val, max_val)) +
+    # coord_fixed(xlim = c(min_val, max_val), ylim = c(min_val, max_val)) +
     theme_classic() +
+    theme(aspect.ratio = 1) +
     theme(text = element_text(size = font_size))
   print(p)
   
