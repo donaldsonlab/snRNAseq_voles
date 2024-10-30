@@ -41,7 +41,7 @@ source("hotspot.R")
 
 import module data and metadata
 ```{r}
-all_cells <- read.csv("docs/ani_mod_scores_allcells_lognorm_counts.csv") %>% filter(animal != "4967")
+all_cells <- read.csv("../../docs/ani_mod_scores_allcells_lognorm_counts.csv") %>% filter(animal != "4967")
 
 metadata <- read.csv("../../docs/seq_beh_metadata.csv") %>% process_metadata() %>% group_level()
 ```
@@ -62,7 +62,7 @@ for (i in 1:23) {
 ```
 get which genes are in which module
 ```{r}
-mod_genes <- read.csv("docs/new_clusts_hotspot-gene-modules.csv")
+mod_genes <- read.csv("../../docs/new_clusts_hotspot-gene-modules.csv")
 
 ```
 
