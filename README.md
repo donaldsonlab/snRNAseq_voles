@@ -18,17 +18,18 @@ All analysis was run as R or Jupyter notebooks. For R notebooks, the .Rmd file a
 3. Run code in src/seurat_clustering.
    - First, run seurat_batch_correction_filtering.Rmd to run batch correction and filter out animal/cells that should be excluded.
    - Then, run UMAP_clustering.Rmd to create UMAP and analyze cell type proportions.
-   - UMAP_clustering.Rmd also creates the final Seurat object used for all downstream analysis. This file (SCT_norm) is also on Figshare as noted above, so this part of the analysis does not need to be run every time.
+   - UMAP_clustering.Rmd also creates the final Seurat object used for all downstream analysis. This file (SCT_norm) is also on Figshare as noted above, so this part of the analysis does not need to be run every time. Note: UMAP is stochastic, so UMAP generated may vary slightly from the UMAP presented in the paper.
 4. Run code in src/hotspot.
    - First, run the Jupyter notebook that runs Hotspot.
    - Then, run hotspot_forpaper.Rmd to analyze the output from Hotspot.
+   - To analyze behavior data (partner preference and free interaction) with the Hotspot output (e.g. to examine correlations), run behavior_hotspot.Rmd.
 5. Run code in src/SVM.
    - First, run run_SVM_animalID.Rmd to run the SVM.
    - Then, run SVM_plots_forpaper.Rmd to visualize the SVM outputs.
 6. Run code in separation_RNAseq.
    - Run separation_data_analysis.Rmd to create all plots for separation data.
 
-**Note** Analysis using src/correlated_genes was not included in the resubmission to Science.
+**Note:** Analysis using src/correlated_genes was not included in the resubmission to Science. This code finds which genes are correlated between partners in each cluster, runs GO analysis, and plots GO terms in a heatmap.
 
 
 
