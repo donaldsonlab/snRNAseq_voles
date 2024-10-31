@@ -1,0 +1,277 @@
+---
+title: "Analysis of Hotspot data with behavior data"
+author: "Liza Brusman"
+date: "2024-10-31 👻"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
+```
+
+```{r, message = FALSE}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(ggpubr)
+library(Hmisc)
+library(corrplot)
+library(ggridges)
+library(forcats)
+library(stringr)
+library(gprofiler2)
+library(ComplexHeatmap)
+library(lme4)
+library(glmmTMB)
+library(Matrix)
+library(boot)
+library(readxl)
+library(emmeans)
+```
+
+```{r}
+free_int_data <- readxl::read_excel("../../docs/free_int_beh.xlsx") %>% rename("free_int_time" = "Total Duration(Second)") %>% filter(pair != "4918x4967")
+```
+
+import metadata
+```{r}
+metadata <- read.csv("../../docs/seq_beh_metadata.csv")
+metadata$Group <- paste(metadata$sex, metadata$SS_OS, sep = "_")
+
+free_int_data <- free_int_data %>% filter(pair %in% metadata$pair) #%>% merge(metadata, on = "pair")
+```
+
+import ppt behavior
+```{r}
+all_beh_data <- read.csv("../../docs/PPTMetrics_coh1234_updated.csv")
+
+all_beh_data2 <- all_beh_data %>% pivot_wider(id_cols=c("Animal.id", "Pair", "Treatment", "Sex", "Color"), names_from="Timepoint", values_from=c(16:24))
+
+all_beh_data2 <- all_beh_data2 %>% rename("animal" = "Animal.id")
+```
+
+import module expression data from Hotspot
+```{r}
+lognorm_mods <- read.csv("../../docs/ani_mod_scores_allcells_lognorm_counts.csv") %>% merge(all_beh_data2, on = "animal") %>% filter(animal != "4967")
+
+lognorm_meta <- lognorm_mods %>% merge(metadata, on = "animal")
+```
+
+get module names
+```{r}
+modules <- c()
+for (i in 1:23) {
+  mod_num <- paste0("Module.", i)
+  modules <- modules %>% append(mod_num)
+}
+```
+
+merge free interaction data, behavior data, and module expression
+```{r}
+free_int_data <- free_int_data %>% rename("Pair" = "pair")
+
+lognorm_mods_beh <- lognorm_mods %>% merge(free_int_data[,c("Pair", "free_int_time")], on = "Pair") %>% merge(metadata, on = "animal")
+```
+
+make pairwise df
+```{r}
+pairwise_df <- data.frame(Pair = unique(lognorm_mods$Pair)) %>% filter(Pair != "4918x4967")
+behs_mods <- lognorm_mods %>% select_if(is.numeric) %>% select(-c("animal")) %>% colnames()
+for (i in behs_mods) {
+  i_df <- lognorm_mods %>% pivot_wider(id_cols = Pair, names_from = Color, values_from = i)
+  i_df[paste0(i, "_absdiff")] <- abs(i_df$O - i_df$B)
+  i_df[paste0(i, "_avg")] <- (i_df$O + i_df$B)/2
+  i_df <- i_df %>% select(Pair, paste0(i, "_absdiff"), paste0(i, "_avg"))
+  pairwise_df <- merge(pairwise_df, i_df, on = "Pair")
+}
+
+pairs_types <- metadata[,c("pair", "pair_type")] %>% unique() %>% filter(pair != "4918x4967") %>% rename("Pair" = "pair")
+
+pairwise_df <- pairwise_df %>% merge(pairs_types, on = "pair")
+
+free_int_pairs <- free_int_data[,c("Pair", "free_int_time")] %>% merge(pairwise_df, on = "pair") # 
+
+```
+
+look at correlation between PPT data and module expression
+```{r}
+groups <- c("F_SS", "F_OS", "M_SS", "M_OS")
+
+lognorm_mods_beh <- lognorm_mods_beh %>% merge(metadata[,c("animal", "pair_type", "SS_OS", "Group")], on = "animal")
+
+for (group in groups) {
+  group_df <- lognorm_mods_beh %>% filter(Group == group)
+
+  to_plot <- group_df %>% select(contains("Module"), "huddle.time.partner_LT", "huddle.time.novel_LT")
+  res <- rcorr(as.matrix(to_plot), type = "spearman")
+  diag(res$P) <- 1
+  
+  behaviors <- c("huddle.time.partner_LT", "huddle.time.novel_LT") #, "percent.phuddle_LT" huddle.time.partner_LT", "huddle.time.novel_LT "free_int_time", 
+
+  #for padj method
+  Rhos_plot <- res$r[behaviors, modules] #%>% as.matrix()
+  ps_plot <- res$P[behaviors, modules] #%>% as.matrix()
+
+  # pdf(file = paste0("output/corrplot_seq_beh_individual_", type, ".pdf"), width = 12, height = 6)
+  corrplot(Rhos_plot, 
+           type = "full",
+           method = "color",
+           tl.col = "black", 
+           addgrid.col = "white",
+           col=colorRampPalette(c("#053061","white", "#67001F"))(200),
+           tl.srt = 90,
+           p.mat = ps_plot,
+           sig.level=c(0.001, 0.01, 0.05),
+           insig="label_sig",
+           pch.cex=2,
+           title=group)
+  # dev.off()
+}
+```
+
+DIY permutations/bootstrapping to find significant correlations
+```{r, eval = FALSE}
+set.seed(123)
+groups <- c("F_SS", "F_OS", "M_SS", "M_OS")
+
+#merge with metadata
+lognorm_mods_beh <- lognorm_mods_beh %>% merge(metadata[,c("animal", "pair_type", "SS_OS", "Group")], on = "animal")
+
+#set up df to hold summary stats
+summary_stats <- data.frame()
+for (group in groups) {
+  print(group)
+  #make separate df just for that group
+  group_df <- lognorm_mods_beh %>% filter(Group == group)
+  
+  #pick out variables to plot in correlation matrix
+  to_plot <- group_df %>% select(contains("Module"), "huddle.time.partner_LT", "huddle.time.novel_LT", "free_int_time")
+  
+  vars <- colnames(to_plot)
+  
+  #loop through all combinations of variables to run individual correlations
+  for (v in vars) {
+    for (w in vars) {
+      c <- rcorr(to_plot[[v]], to_plot[[w]], type = "spearman")
+      
+      #then shuffle variables to determine the null distribution of correlations
+      sub_shuffled_df <- data.frame()
+      for (i in 1:1000) { #1:1000
+        c2 <- rcorr(sample(to_plot[[v]]), sample(to_plot[[w]]), type = "spearman")
+        
+        #create mini df for that shuffle
+        mini_shuffled_df <- data.frame("Var1" = v, "Var2" = w, "Rho_shuff" = c2$r[2], "pval_shuff" = c2$P[2], "n_iter" = i, "Group" = group)
+        sub_shuffled_df <- rbind(sub_shuffled_df, mini_shuffled_df)
+        # shuffled_df <- rbind(shuffled_df, mini_shuffled_df)
+      }
+      
+      #create df with true values and means of shuffled values
+      mini_df <- data.frame("Var1" = v, "Var2" = w, "Rho_true" = c$r[2], "pval_true" = c$P[2], 
+                            "Rho_shuff" = mean(sub_shuffled_df$Rho_shuff), "pval_shuff" = mean(sub_shuffled_df$pval_shuff))
+      
+      #find top 1% of p-values
+      n <- 1
+      pval_top1perc_df <- sub_shuffled_df[sub_shuffled_df$pval_shuff < quantile(sub_shuffled_df$pval_shuff, prob=0.01),]
+      pval_top1perc <- max(pval_top1perc_df$pval_shuff)
+      #find top 5% of p-values
+      n <- 5
+      pval_top5perc_df <- sub_shuffled_df[sub_shuffled_df$pval_shuff < quantile(sub_shuffled_df$pval_shuff, prob=0.05),]
+      pval_top5perc <- max(pval_top5perc_df$pval_shuff)
+      
+      #create df with all these summary stats
+      summ_df <- data.frame(Group = group,
+                           Var1 = v,
+                           Var2 = w,
+                           n_samps = nrow(sub_shuffled_df),
+                           Rho_shuff_mean = mean(sub_shuffled_df$Rho_shuff),
+                           Rho_shuff_stdev = sd(sub_shuffled_df$Rho_shuff),
+                           Rho_shuff_sterr = sd(sub_shuffled_df$Rho_shuff)/sqrt(nrow(sub_shuffled_df)),
+                           pval_shuff_mean = mean(sub_shuffled_df$pval_shuff),
+                           pval_shuff_stdev = sd(sub_shuffled_df$pval_shuff),
+                           pval_shuff_sterr = sd(sub_shuffled_df$pval_shuff)/sqrt(nrow(sub_shuffled_df)),
+                           Rho_true = c$r[2],
+                           pval_true = c$P[2],
+                           pval_cutoff_1perc = pval_top1perc,
+                           pval_cutoff_5perc = pval_top5perc
+                           )
+      summary_stats <- rbind(summary_stats, summ_df)
+    }
+  }
+}
+
+```
+
+save p-values as csv
+```{r, eval = FALSE}
+write.csv(summary_stats, "output/shuffled_corrs_behs_mods.csv")
+```
+
+read in csv
+```{r}
+summary_stats <- read.csv("output/shuffled_corrs_behs_mods.csv")
+```
+
+
+cutoff p-values to be within the top (lowest) 5% of shuffled p-values. these are the p-values plotted on the heatmaps
+```{r}
+sig_corrs <- summary_stats %>% filter(pval_true < pval_cutoff_5perc) %>% filter(Var1 == "huddle.time.partner_LT" | Var1 == "huddle.time.novel_LT") %>% filter(Var1 != Var2)
+```
+
+
+does free interaction time differ by pairing type?
+```{r}
+#make violin plot
+p <- ggplot(free_int_pairs, aes(x = pair_type, y = free_int_time/60, color = pair_type, fill = pair_type)) + 
+  geom_violin(alpha = 0.8, lwd = 1) + 
+  geom_point(color = "slategrey", alpha = 1) + 
+  scale_color_manual(values = c("FM" = "coral", "FF" = "slateblue", "MM" = "#1B9E77")) +
+  scale_fill_manual(values = c("FM" = "coral", "FF" = "slateblue", "MM" = "#1B9E77")) +
+  ylim(0, 7000/60) +
+  xlab("Group") +
+  ylab("Free interaction time (min)") +
+  theme_classic()
+print(p)
+# ggsave("output/group_diffs_free_int.pdf", p)
+
+#stats to see if there are group differences
+fit <- glmmTMB(free_int_time~pair_type, data = free_int_pairs)
+print(summary(fit))
+
+EMM <- emmeans(fit, ~ pair_type)
+coef <- contrast(EMM, "pairwise")
+coef2 <- summary(coef, adjust = "fdr") #[["sex*SSOS"]])
+print(coef2)
+```
+
+
+
+
+look at correlation between free interaction time and module expression
+```{r}
+for (mod in modules) {
+  c <- rcorr(lognorm_mods_beh[,mod], lognorm_mods_beh$free_int_time/60, type = "spearman")
+  # print(c)
+
+  p <- ggplot(lognorm_mods_beh, aes(x = .data[[mod]], y = free_int_time/60)) + 
+    geom_point(aes(color = pair_type)) + 
+    geom_smooth(method = "lm", color = "black")  +
+    scale_color_manual(values = c("FM" = "coral", "FF" = "slateblue", "MM" = "#1B9E77")) +
+    ggtitle(paste0("Rho = ", round(c$r[2], 4), " p = ", round(c$P[2], 4))) +
+    xlab(paste0(mod, " Expression")) +
+    ylab("Free interaction time (min)") +
+    theme_classic() +
+    theme(aspect.ratio = 1) +
+    theme(text = element_text(size = 16))
+  
+  print(p)
+  
+  # fname <- paste0("output/module", mod, "_free_int_corr.pdf")
+  # ggsave(fname, p)
+}
+
+
+```
+```{r}
+sessionInfo()
+```
+
