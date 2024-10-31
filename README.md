@@ -3,14 +3,21 @@ snRNA-seq analysis of nucleus accumbens tissue from prairie voles
 
 All raw sequencing data is on GEO with the accession number GSE255620. It is embargoed until Aug 1, 2025. \
 
-The Seurat object with the snRNA-seq data (named SCT_norm) is on Figshare. Other important files (metadata, and tissue-level RNA-seq data) are in "docs/" directory \
+All analysis was run as R or Jupyter notebooks. For R notebooks, the .Rmd file and the .md file (with figure outputs) are both included. \
 
-Link for Seurat object (private link - should change to public link upon publication): https://figshare.com/s/13648f94bab3f8cda994 \
-Metadata is in "docs/" directory (and on Figshare). File is "seq_beh_metadata.csv" \
-RNA-seq data is in "docs/" directory. Files are "Input_RNAseq_metrics.xlsx" and "Merged_all_inputs.txt" \
-CSV containing mean(log(counts)) per gene per animal per cluster (for correlated genes analysis which was included in first submission, but not resubmission) is on Figshare (private link): https://figshare.com/s/647301ed42293deed2f5 \
+## Files on Figshare
+- SCT_norm.rds : The Seurat object for all snRNA-seq analyses. All animals are combined in this object. Private link (should change to public link upon publication): https://figshare.com/s/13648f94bab3f8cda994
+- Animal metadata (seq_beh_metadata.csv) : metadata from snRNA-seq experiment. Also on Github in "docs/"
+- Mean SCT-normalized counts per gene, per animal, per cluster (avg_SCT_cts_per_cluster.csv) : CSV containing mean(log(counts)) per gene per animal per cluster (for correlated genes analysis which was included in first submission, but not resubmission). Private link: https://figshare.com/s/647301ed42293deed2f5
 
-All analysis was run as R or Jupyter notebooks. For R notebooks, the .Rmd file and the .md file (with figure outputs) are both included.
+## The "docs/" directory
+- Input_RNAseq_metrics.xlsx : metadata for animals in separation experiment (data from https://doi.org/10.7554/eLife.80517).
+- Merged_all_inputs.txt : RNA-seq gene counts for each animal in separation experiment (data from https://doi.org/10.7554/eLife.80517).
+- PPTMetrics_coh1234_updated.csv : Partner preference test behavior data for animals in snRNA-seq experiment. Note: not all animals in this file were sequenced.
+- ani_mod_scores_allcells_lognorm_counts.csv : mean(log(counts)) values from Hotspot analysis for each animal. This file is generated in run_hotspot.ipynb but provided here to avoid having to re-run Hotspot.
+- free_int_beh.xlsx : Behavior data from free interaction test on snRNA-seq experiment animals.
+- new_clusts_hotspot-gene-modules.csv : Gene module membership data generated in run_hotspot.ipynb but provided here to avoid re-running Hotspot.
+- seq_beh_metadata.csv : metadata from snRNA-seq experiment
 
 ## To run this analysis
 1. Download sequencing data from GEO.
@@ -30,6 +37,10 @@ All analysis was run as R or Jupyter notebooks. For R notebooks, the .Rmd file a
    - Run separation_data_analysis.Rmd to create all plots for separation data.
 
 **Note:** Analysis using src/correlated_genes was not included in the resubmission to Science. This code finds which genes are correlated between partners in each cluster, runs GO analysis, and plots GO terms in a heatmap.
+
+## renv.lock
+This is the R environment with the package versions used for this analysis. An R environment can be created from the renv.lock file.
+
 
 
 
