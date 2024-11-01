@@ -8,7 +8,8 @@ All analysis was run as R or Jupyter notebooks. For R notebooks, the .Rmd file a
 ## Files on Figshare
 - SCT_norm.rds : The Seurat object for all snRNA-seq analyses. All animals are combined in this object. Private link (should change to public link upon publication): https://figshare.com/s/13648f94bab3f8cda994
 - Animal metadata (seq_beh_metadata.csv) : metadata from snRNA-seq experiment. Also on Github in "docs/"
-- Mean SCT-normalized counts per gene, per animal, per cluster (avg_SCT_cts_per_cluster.csv) : CSV containing mean(log(counts)) per gene per animal per cluster (for correlated genes analysis which was included in first submission, but not resubmission). Private link: https://figshare.com/s/647301ed42293deed2f5
+- Zipped Hotspot object .pkl file (new_clusts_ncountsct_Copy): zipped .pkl file of Hotspot object, so that you don't need to run Hotspot algorithm every time. Private link: https://figshare.com/s/85ddd95e7fc33956288f
+- Mean SCT-normalized counts per gene, per animal, per cluster (avg_SCT_cts_per_cluster.csv) : CSV containing mean(log(counts)) per gene per animal per cluster (for correlated genes analysis, which was included in first submission, but not resubmission). Private link: https://figshare.com/s/647301ed42293deed2f5
 
 ## The "docs/" directory
 - [Input_RNAseq_metrics.xlsx](docs/Input_RNAseq_metrics.xlsx): metadata for animals in separation experiment (data from [Sadino, et al.](https://doi.org/10.7554/eLife.80517)).
