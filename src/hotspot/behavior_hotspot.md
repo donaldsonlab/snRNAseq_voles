@@ -397,6 +397,35 @@ for (mod in modules) {
 
 ![](behavior_hotspot_files/figure-gfm/unnamed-chunk-15-23.png)<!-- -->
 
+look at correlation between PPT and free interaction behavior
+
+``` r
+#spearman correlation
+c <- rcorr(lognorm_mods_beh$LT_phuddle, lognorm_mods_beh$free_int_time, type = "spearman")
+
+#scatter plot
+p <- ggplot(lognorm_mods_beh, aes(x = LT_phuddle/60, y = free_int_time/60)) + 
+    geom_point(aes(color = pair_type)) + 
+    geom_smooth(method = "lm", color = "black")  +
+    scale_color_manual(values = c("FM" = "coral", "FF" = "slateblue", "MM" = "#1B9E77")) +
+    ggtitle(paste0("Rho = ", round(c$r[2], 4), " p = ", round(c$P[2], 4))) +
+    xlab("Partner Huddle Time (min)") +
+    ylab("Free interaction time (min)") +
+    theme_classic() +
+    theme(aspect.ratio = 1) +
+    theme(text = element_text(size = 16))
+print(p)
+```
+
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+![](behavior_hotspot_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+
+``` r
+#save
+# ggsave("output/ppt_vs_freeint.pdf", p)
+```
+
 ``` r
 sessionInfo()
 ```
