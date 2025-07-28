@@ -1,0 +1,119 @@
+---
+title: "pseudobulk"
+output: html_document
+date: "2025-01-31"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message=FALSE}
+library(Seurat)
+library(data.table)
+library(DESeq2)
+library(tidyverse)
+```
+
+```{r}
+#import seurat object. samples from all animals have already been integrated and non-nucleus accumbens cells have already been filtered out
+#this file should be ~17.6 GB when imported
+SCT_norm <- readRDS("/Users/allenma/snRNAseq_voles_files/SCT_norm.rds")
+```
+
+```{r, fig.width = 9.5, fig.height = 7}
+#pick new palette for UMAP
+palette <- c("#304880", "#4898D0", "#88C0F0", "#9060A0", "#C078C0", "#389078", "#70A830", "#98D048", "#60D0A0", "#80E8C0", "#783028", "#B82820", "#D04058", "#F87878", "#F89040") 
+
+#reorder clusters for plotting
+order <- c("Drd1Pdyn", "Drd1PdynOprm1", "Drd1Penk", "Drd2Penk", "Drd2NoPenk", "GABAergicNeurons", "Dlx2ImmatureNeurons", "SstNpyInterneurons", "PvalbInterneurons", "CholinergicInterneurons", "MatureOligos", "ImmatureOligos", "Astrocytes", "Microglia", "RadialGlia-LikeCells")
+
+DefaultAssay(SCT_norm) <- "SCT"
+Idents(SCT_norm) <- "new_clusts"
+
+# reorder clusters
+Idents(SCT_norm) <- factor(Idents(SCT_norm), 
+                            levels=order)
+
+#create UMAP
+ani.umap <- DimPlot(object = SCT_norm, reduction = "umap", label = FALSE, cols = palette, raster = FALSE)
+print(ani.umap)
+
+# setwd("output/")
+# ggsave(
+#   "umap_final.pdf",
+#   plot = ani.umap,
+#   device = pdf,
+#   scale = 1,
+#   width = 9.5,
+#   height = 7,
+#   units = c("in"),
+#   dpi = 300,
+#   limitsize = FALSE,
+#   bg = "white"
+# )
+
+```
+
+```{r}
+
+OPCs <- subset(x = SCT_norm, idents = "ImmatureOligos")
+Assays(OPCs)
+names(OPCs@assays)
+counts_matrix <- Seurat::GetAssayData(OPCs, layer = "counts")
+normcounts_matrix <- Seurat::GetAssayData(OPCs, layer = "data")
+counts_matrix[1:6, 1:6]
+normcounts_matrix[1:6, 1:6]
+myt1_counts <- counts_matrix["Myt1", ]
+hist(myt1_counts)
+Ani_names <- unique(OPCs@meta.data$Ani)
+Ani_names
+cell_type_names <- unique(OPCs@meta.data$new_clusts)
+cell_type_names
+
+
+```
+
+```{r}
+# First, make sure I have the pseudobulk group column
+SCT_norm@meta.data$pseudobulk_group <- paste(SCT_norm@meta.data$Ani, SCT_norm@meta.data$new_clusts, sep = "_")
+
+
+# Access raw counts (assuming "RNA" is the assay with raw counts)
+raw_counts <- GetAssayData(SCT_norm, assay = "RNA", slot = "counts")
+
+# Transpose the raw counts matrix
+counts_matrix <- t(raw_counts)
+
+# Create a data frame where rows are cells and columns are genes
+counts_df <- as.data.frame(counts_matrix)
+
+# Add the pseudobulk_group as a column
+counts_df$pseudobulk_group <- SCT_norm@meta.data$pseudobulk_group
+
+# Now aggregate by pseudobulk_group
+aggr_counts <- counts_df %>%
+  dplyr::group_by(pseudobulk_group) %>%
+  dplyr::summarise(across(everything(), sum))
+
+
+# Check the result
+aggr_counts[1:6,1:6]
+
+```
+
+```{r}
+aggr_counts <- as.data.frame(aggr_counts)
+
+rownames(aggr_counts) <- aggr_counts$pseudobulk_group
+
+aggr_counts <- aggr_counts %>% select(-pseudobulk_group)
+
+aggr_counts <- t(aggr_counts)
+
+aggr_counts[1:6, 1:6]
+
+write.csv(aggr_counts, "/Users/allenma/snRNAseq_voles_files/output/psuedobulk.csv")
+write.csv(SCT_norm@meta.data, "/Users/allenma/snRNAseq_voles_files/output/psuedobulk_meta.csv")
+
+```

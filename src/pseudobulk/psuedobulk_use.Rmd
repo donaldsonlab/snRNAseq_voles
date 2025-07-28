@@ -1,0 +1,439 @@
+---
+  title: "pseudobulk"
+output: html_document
+date: "2025-01-31"
+---
+  
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r, message=FALSE}
+library(Seurat)
+library(data.table)
+library(DESeq2)
+library(tidyverse)
+library(ComplexHeatmap)
+```
+
+
+
+
+```{r setup, include=FALSE}
+
+outdir= "/Users/allenma/snRNAseq_voles_files/output/" 
+
+aggr_counts <- read.csv("/Users/allenma/snRNAseq_voles_files/output/psuedobulk.csv")
+
+metadf <- read.csv("/Users/allenma/snRNAseq_voles_files/output/psuedobulk_meta.csv")
+
+
+```
+
+
+
+```{r setup, include=FALSE}
+
+metadf <- metadf %>% select(Ani, Sex, Pair, PairType, SSOS, Age, Preg, SeqCohort, BehCohort, new_clusts, Group, pseudobulk_group) %>% unique()
+
+metadf$colnames <- paste("X",metadf$pseudobulk_group, sep="")
+
+metadf <- metadf %>%
+  separate(Pair, into = c("Ani1", "Ani2"), sep = "x", remove = FALSE)
+
+
+```
+
+
+```{r}
+
+m_aggr_counts <- as.matrix(aggr_counts)
+
+# Create a basic heatmap
+#Heatmap(m_aggr_counts, 
+#        name = "Expression", # name of the color scale
+#        row_title = "genes", # Title for rows
+#        column_title = "animal cell type", # Title for columns
+#        show_row_names = FALSE, # Hide row names if there are too many
+#        show_column_names = FALSE, # Hide column names if there are too many
+#        cluster_rows = TRUE, # Clustering rows (optional)
+#        cluster_columns = TRUE, # Clustering columns (optional)
+#        col = colorRampPalette(c("white", "blue"))(100), # Color scale from white to blue
+#        row_split = 5, # Split rows into groups (optional)
+#        column_split = 5, # Split columns into groups (optional)
+#        heatmap_legend_param = list(title = "Expression Value") # Adjust legend title
+#)
+
+```
+
+```{r}
+OPCs_idx <- which(tstrsplit(colnames(aggr_counts), "_")[[2]] == "ImmatureOligos")
+
+OPCs_aggr_counts<- aggr_counts[, OPCs_idx]
+rownames(OPCs_aggr_counts) <- aggr_counts$X
+OPCs_aggr_counts[1:6, 1:6]
+```
+
+```{r}
+# Step 1: Identify unique values in the Ani column of metadf
+unique_ani <- unique(metadf$Ani)
+
+# Step 2: Initialize a list to store the sum of counts for each group
+grouped_sums <- list()
+
+# Step 3: For each unique value in Ani, collect the relevant columns and sum the values in aggr_counts
+for (group in unique_ani) {
+  # Get the columns that belong to the current Ani group
+  thisanimal <- metadf %>% filter(Ani==group)
+  cols_in_group <- thisanimal$colnames
+  
+  # Sum the counts for these columns across all rows
+  aggr_counts_mini<- aggr_counts %>% select(any_of(cols_in_group)) %>% mutate(total = rowSums(.))
+  aniname <- paste("X", group, sep="")
+  grouped_sums[[aniname]] <- aggr_counts_mini$total
+  
+}
+
+grouped_sums <- as.data.frame(grouped_sums)
+rownames(grouped_sums)<- aggr_counts$X
+```
+
+```{r}
+
+#need to know pairs
+metadatagroups <- unique(as.data.frame(cbind(metadf$Ani, metadf$PairType, metadf$Pair, metadf$Sex)))
+
+colnames(metadatagroups) <- c("Ani", "PairType", "Pair", "Sex")
+
+metadatagroups <- metadatagroups %>%
+  separate(Pair, into = c("Ani1", "Ani2"), sep = "x", remove = FALSE)
+
+metadatagroups$cols <- paste(metadatagroups$Ani, "_ImmatureOligos", sep = "")
+
+```
+
+```{r}
+#pair up the data
+
+Anisex <- metadatagroups %>% select(Ani, Sex)
+
+Anisex1 <- Anisex
+Anisex2 <- Anisex
+
+colnames(Anisex1) <- c("Ani1", "Ani1Sex")
+colnames(Anisex2) <- c("Ani2", "Ani2Sex")
+
+
+
+pairs1and2 <- metadf %>% select(Ani1, Ani2, PairType, Pair) %>% unique()
+pairs1and2scramble <- metadf %>% select(Ani1, Ani2) %>% unique()
+pairs1and2scramble=transform(pairs1and2scramble, Ani2 = sample(Ani2)) 
+
+
+pairs1and2 <- merge(pairs1and2, Anisex1, on="Ani1")
+pairs1and2 <- merge(pairs1and2, Anisex2, on="Ani2")
+pairs1and2
+
+pairs1and2scramble <- merge(pairs1and2scramble, Anisex1, on="Ani1")
+pairs1and2scramble <- merge(pairs1and2scramble, Anisex2, on="Ani2")
+
+pairs1and2scramble$Pair <- paste(pairs1and2scramble$Ani1, "x", pairs1and2scramble$Ani2, sep="")
+
+pairs1and2scramble$PairType <- paste(pairs1and2scramble$Ani1Sex, pairs1and2scramble$Ani2Sex, sep="")
+
+```
+
+
+```{r}
+# Keep remaking pairs1and2scramble until there are no "MF" pairs
+
+pair_table <- table(pairs1and2scramble$PairType)
+
+while (!is.na(pair_table["MF"])) {
+  
+  # Remake pairs1and2scramble
+  pairs1and2scramble <- metadf %>% select(Ani1, Ani2) %>% unique()
+  pairs1and2scramble <- transform(pairs1and2scramble, Ani2 = sample(Ani2))
+  
+  # Merge with sex information
+  pairs1and2scramble <- merge(pairs1and2scramble, Anisex1, by="Ani1")
+  pairs1and2scramble <- merge(pairs1and2scramble, Anisex2, by="Ani2")
+  
+  # Create pair identifiers again
+  pairs1and2scramble$Pair <- paste(pairs1and2scramble$Ani1, "x", pairs1and2scramble$Ani2, sep="")
+  pairs1and2scramble$PairType <- paste(pairs1and2scramble$Ani1Sex, pairs1and2scramble$Ani2Sex, sep="")
+
+pair_table <- table(pairs1and2scramble$PairType)
+  
+if (is.na(pair_table["MF"]) || pair_table["MF"] > 0) {
+    next # Skip the rest of the loop and start over
+  }
+  
+  # If no "MF" pair is found, break the loop
+  break
+}
+```
+
+```{r}
+table(pairs1and2scramble$PairType)
+```
+
+```{r}
+metadfOPCs <- metadf %>% filter(grepl("ImmatureOligos", colnames))
+OPCs_aggr_counts_ordered <- as.data.frame(OPCs_aggr_counts) %>% dplyr::select(metadfOPCs$colnames)
+
+
+write.csv(OPCs_aggr_counts_ordered, paste(outdir,"pseudobulkraw_gene_exp_mod6_OPCs.csv", sep=""))
+#run through Deseq to get normalized counts
+
+dds <- DESeqDataSetFromMatrix(countData=OPCs_aggr_counts_ordered, 
+                              colData=metadfOPCs, 
+                              design=~Sex)
+
+dds <- DESeq(dds)
+
+```
+
+```{r}
+res <- results(dds)
+summary(res)
+res <- res[order(res$padj),]
+head(res)
+plotCounts(dds, gene="Ncapd3", intgroup="Sex")
+normalized_counts <- counts(dds, normalized=TRUE)
+```
+
+
+
+```{r}
+#bring in module 6 genes so we can select them
+
+mod_genes <- read.csv("/Users/allenma/snRNAseq_voles/docs/new_clusts_hotspot-gene-modules.csv")
+
+mod6_genes <- mod_genes %>% filter(Module==6)
+
+aggr_counts_mod6 <- as.data.frame(normalized_counts) %>% filter(rownames(normalized_counts) %in% mod6_genes$Gene)
+```
+
+
+
+```{r}
+pairs1and2$Ani2col <- paste("X", pairs1and2$Ani2, "_ImmatureOligos", sep="")
+pairs1and2$Ani1col <- paste("X", pairs1and2$Ani1, "_ImmatureOligos", sep="")
+pairs1and2scramble$Ani2col <- paste("X", pairs1and2$Ani2, "_ImmatureOligos", sep="")
+pairs1and2scramble$Ani1col <- paste("X", pairs1and2$Ani1, "_ImmatureOligos", sep="")
+
+```
+
+```{r}
+
+```
+
+
+```{r}
+aggr_counts_mod6_t <- as.data.frame(t(aggr_counts_mod6))
+
+aggr_counts_mod6_t$rownames <- rownames(aggr_counts_mod6_t)
+
+aggr_counts_mod6_long <- aggr_counts_mod6_t %>%
+  pivot_longer(cols = -rownames, 
+               names_to = "Gene", 
+               values_to = "Expression")
+
+aggr_counts_mod6_long_Ani1 <- aggr_counts_mod6_long
+aggr_counts_mod6_long_Ani2 <- aggr_counts_mod6_long
+
+aggr_counts_mod6_long_Ani1$Ani1col <- aggr_counts_mod6_long_Ani1$rownames 
+aggr_counts_mod6_long_Ani2$Ani2col <- aggr_counts_mod6_long_Ani2$rownames
+
+aggr_counts_mod6_long_Ani1 <- aggr_counts_mod6_long_Ani1 %>% select(Ani1col, Gene, Expression)
+aggr_counts_mod6_long_Ani2 <- aggr_counts_mod6_long_Ani2 %>% select(Ani2col, Gene, Expression)
+
+
+colnames(aggr_counts_mod6_long_Ani1) <- c("Ani1col", "Gene", "Ani1_Expression")
+colnames(aggr_counts_mod6_long_Ani2) <- c("Ani2col", "Gene", "Ani2_Expression")
+```
+
+```{r}
+gene_exp <- aggr_counts_mod6_long %>% group_by(Gene) %>%
+  summarise(mean_exp = mean(Expression), 
+            median_exp = median(Expression), 
+            sd_exp = sd(Expression))
+
+gene_exp$CV <- gene_exp$sd_exp/gene_exp$mean_exp
+
+hist(gene_exp$median_exp, breaks=20)
+
+write.csv(gene_exp, paste(outdir,"pseudobulk_gene_exp_mod6_inOPC.csv", sep=""))
+
+ggplot(gene_exp, aes(x=median_exp, y=sd_exp))+geom_point()
+ggplot(gene_exp, aes(x=median_exp, y=CV))+geom_point()
+
+ggplot(gene_exp, aes(x=median_exp, y=mean_exp))+geom_point()
+```
+
+
+
+```{r}
+pairs1and2_exp <- merge(pairs1and2, aggr_counts_mod6_long_Ani1, on=c("Ani1col"))
+pairs1and2_exp <- merge(pairs1and2_exp, aggr_counts_mod6_long_Ani2, on=c("Ani2col", "Gene"))
+
+pairs1and2scramble_exp <- merge(pairs1and2scramble, aggr_counts_mod6_long_Ani1, on=c("Ani1col"))
+pairs1and2scramble_exp <- merge(pairs1and2scramble_exp, aggr_counts_mod6_long_Ani2, on=c("Ani2col", "Gene"))
+
+write.csv(pairs1and2_exp, paste(outdir,"pseudobulk_gene_exp_peranimal_OPC.csv", sep=""))
+```
+
+```{r}
+pairs1and2_exp_summary <- pairs1and2_exp %>%
+  group_by(Gene) %>%
+  summarise(
+    Ani1_mean = mean(Ani1_Expression, na.rm = TRUE),
+    Ani1_median = median(Ani1_Expression, na.rm = TRUE),
+    Ani1_sd = sd(Ani1_Expression, na.rm = TRUE),
+    Ani2_mean = mean(Ani2_Expression, na.rm = TRUE),
+    Ani2_median = median(Ani2_Expression, na.rm = TRUE),
+    Ani2_sd = sd(Ani2_Expression, na.rm = TRUE)
+  )
+
+
+pairs1and2_exp_summary$CV <- pairs1and2_exp_summary$Ani1_sd/pairs1and2_exp_summary$Ani1_mean
+
+
+pairs1and2_exp_summary <- pairs1and2_exp_summary %>% arrange(desc(CV))
+```
+
+```{r}
+#Gather per gene the intercept, slope and r2 for all animals, MM, FF, FM
+#put it all the pairs1and2_exp_summary 
+
+spearmanpergene <- pairs1and2_exp %>%
+  group_by(Gene) %>%
+  summarise(cor_value = cor(Ani1_Expression, Ani2_Expression, use = "pairwise", method="spearman"), .groups = "drop")
+
+spearmanpergene_scramble <- pairs1and2scramble_exp %>%
+  group_by(Gene) %>%
+  summarise(cor_value = cor(Ani1_Expression, Ani2_Expression, use = "pairwise", method="spearman"), .groups = "drop")
+
+
+spearmanpergene <- spearmanpergene %>% arrange(cor_value)
+spearmanpergene_scramble <- spearmanpergene_scramble %>% arrange(cor_value)
+#Also try with suming the expression (or averaging the expression) of every set of 10 genes
+
+
+spearmanpergenepair <- pairs1and2_exp %>%
+  group_by(Gene,PairType) %>%
+  summarise(cor_value = cor(Ani1_Expression, Ani2_Expression, use = "pairwise", method="spearman"), .groups = "drop")
+
+reshaped_data <- spearmanpergenepair %>%
+  pivot_wider(names_from = PairType, values_from = cor_value)
+
+reshaped_data <- reshaped_data %>% arrange(desc(reshaped_data$FM))
+
+spearmanpergenepair_scramble <- pairs1and2scramble_exp %>%
+  group_by(Gene,PairType) %>%
+  summarise(cor_value = cor(Ani1_Expression, Ani2_Expression, use = "pairwise", method="spearman"), .groups = "drop")
+
+reshaped_data_scramble <- spearmanpergenepair_scramble %>%
+  pivot_wider(names_from = PairType, values_from = cor_value)
+
+reshaped_data_scramble <- reshaped_data_scramble %>% arrange(desc(reshaped_data$FM))
+#Also try with suming the expression (or averaging the expression) of every set of 10 genes
+```
+
+```{r}
+ggplot(reshaped_data, aes(x=FM, y=MM))+geom_point()+ggtitle("real data, Spearmans correlation, each dot is a gene")
+ggplot(reshaped_data_scramble, aes(x=FM, y=MM))+geom_point()+ggtitle("scramble vole 2, Spearmans correlation, each dot is a gene")
+
+```
+
+```{r}
+ggplot(reshaped_data, aes(x=FM, y=FF))+geom_point()+ggtitle("real data, Spearmans correlation, each dot is a gene")
+ggplot(reshaped_data_scramble, aes(x=FM, y=FF))+geom_point()+ggtitle("scramble vole 2, Spearmans correlation, each dot is a gene")
+```
+```{r}
+write.csv(reshaped_data, paste(outdir,"Spearman_mod6_OPC.csv", sep=""))
+```
+
+```{r}
+#Does the sum or mean per animal correlate?
+pairs1and2_Ani_summary <- pairs1and2_exp %>%
+  group_by(Ani1) %>%
+  summarise(
+    Ani1_mean = mean(Ani1_Expression, na.rm = TRUE),
+    Ani1_sum = sum(Ani1_Expression, na.rm = TRUE),
+    Ani1_median = median(Ani1_Expression, na.rm = TRUE),
+    Ani1_sd = sd(Ani1_Expression, na.rm = TRUE),
+    Ani2_mean = mean(Ani2_Expression, na.rm = TRUE),
+    Ani2_sum = sum(Ani2_Expression, na.rm = TRUE),
+    Ani2_median = median(Ani2_Expression, na.rm = TRUE),
+    Ani2_sd = sd(Ani2_Expression, na.rm = TRUE)
+  )
+pt <- pairs1and2 %>% select(Ani1, PairType)
+
+pairs1and2_Ani_summary<-merge(pairs1and2_Ani_summary, pt, on="Ani1")
+
+```
+
+```{r}
+#confirm orginal finding that mod6 looks good in pairs but in OPC only
+
+#the FF look like crap for mod6 but the MM and FM look like I'd expect. However, the crappy FF fit is really just one pair not on the line. 
+
+#all mean
+p<-ggplot(pairs1and2_Ani_summary, aes(x=Ani1_mean, y=Ani2_mean))+geom_point()+ geom_smooth(method = "lm")
+
+#all median
+p<-ggplot(pairs1and2_Ani_summary, aes(x=Ani1_median, y=Ani2_median))+geom_point()+ geom_smooth(method = "lm")
+
+#by pair type mean
+p<-ggplot(pairs1and2_Ani_summary, aes(x=Ani1_mean, y=Ani2_mean, color=PairType))+geom_point()+ geom_smooth(method = "lm")
+
+#by pair type mean no line
+p<-ggplot(pairs1and2_Ani_summary, aes(x=Ani1_mean, y=Ani2_mean, color=PairType))+geom_point()
+
+#by pair type median
+p<-ggplot(pairs1and2_Ani_summary, aes(x=Ani1_median, y=Ani2_median, color=PairType))+geom_point()+ geom_smooth(method = "lm")
+
+#by pair type median no lines
+p<-ggplot(pairs1and2_Ani_summary, aes(x=Ani1_median, y=Ani2_median, color=PairType))+geom_point()
+
+
+```
+
+
+```{r}
+pairs1and2_exp_onegene <- pairs1and2_exp %>% filter(Gene=="Lhfpl3")
+p<-ggplot(pairs1and2_exp_onegene, aes(x=Ani1_Expression, y=Ani2_Expression, color=PairType))+geom_point()+ geom_smooth(method = "lm")
+
+ggplot(pairs1and2_exp_onegene, aes(x=Ani1_Expression, y=Ani2_Expression, color=PairType))+geom_point()
+
+pairs1and2_exp_onegene_FF <- pairs1and2_exp_onegene %>% filter(PairType=="FF")
+pairs1and2_exp_onegene_FM <- pairs1and2_exp_onegene %>% filter(PairType=="FM")
+pairs1and2_exp_onegene_MM <- pairs1and2_exp_onegene %>% filter(PairType=="MM")
+modelFF <- lm(Ani2_Expression ~ Ani1_Expression, data = pairs1and2_exp_onegene_FF)
+modelFM <- lm(Ani2_Expression ~ Ani1_Expression, data = pairs1and2_exp_onegene_FM)
+modelMM <- lm(Ani2_Expression ~ Ani1_Expression, data = pairs1and2_exp_onegene_MM)
+
+
+print(modelFF)
+r_squared <- summary(modelFF)$r.squared
+
+# Print R-squared
+cat("R-squared:", r_squared, "\n")
+
+
+print(modelMM)
+r_squared <- summary(modelMM)$r.squared
+
+# Print R-squared
+cat("R-squared:", r_squared, "\n")
+
+print(modelFM)
+r_squared <- summary(modelFM)$r.squared
+
+# Print R-squared
+cat("R-squared:", r_squared, "\n")
+
+```
