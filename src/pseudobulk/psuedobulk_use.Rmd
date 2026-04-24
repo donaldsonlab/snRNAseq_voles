@@ -5,16 +5,19 @@ date: "2025-01-31"
 ---
   
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+renv::init()
 ```
 
-
-```{r, message=FALSE}
-library(Seurat)
+```{r}
 library(data.table)
 library(DESeq2)
 library(tidyverse)
 library(ComplexHeatmap)
+```
+
+```{r}
+library(Seurat)
+
 ```
 
 
