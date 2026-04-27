@@ -12,8 +12,7 @@ All analysis was run as R or Jupyter notebooks. For R notebooks, the .Rmd file a
 - Mean SCT-normalized counts per gene, per animal, per cluster (avg_SCT_cts_per_cluster.csv) : CSV containing mean(log(counts)) per gene per animal per cluster (for correlated genes analysis, which was included in first submission, but not resubmission). Private link: https://figshare.com/s/647301ed42293deed2f5
 
 ## The "docs/" directory
-- [Input_RNAseq_metrics.xlsx](docs/Input_RNAseq_metrics.xlsx): metadata for animals in separation experiment (data from [Sadino, et al.](https://doi.org/10.7554/eLife.80517)).
-- [Merged_all_inputs.txt](docs/Merged_all_inputs.txt): RNA-seq gene counts for each animal in separation experiment (data from [Sadino, et al.](https://doi.org/10.7554/eLife.80517)).
+
 - [PPTMetrics_coh1234_updated.csv](docs/PPTMetrics_coh1234_updated.csv): Partner preference test behavior data for animals in snRNA-seq experiment. Note: not all animals in this file were sequenced.
 - [ani_mod_scores_allcells_lognorm_counts.csv](docs/ani_mod_scores_allcells_lognorm_counts.csv): mean(log(counts)) values from Hotspot analysis for each animal. This file is generated in [run_hotspot.ipynb](src/hotspot/run_hotspot.ipynb) but provided here to avoid having to re-run Hotspot.
 - [free_int_beh.xlsx](docs/free_int_beh.xlsx): Behavior data from free interaction test on snRNA-seq experiment animals.
