@@ -1,5 +1,6 @@
 setwd("/Users/allenma/voles/oct25seq/diffexp/")
 #install.packages("renv")
+#BiocManager::install("clusterProfiler")
 
 #renv::init(force = TRUE) 
 ###############################################################################
@@ -16,6 +17,12 @@ library("vsn")
 library(ComplexHeatmap)
 library(UpSetR)
 library(FSA)
+library(timereg)
+library(biomaRt)
+library(clusterProfiler)
+library(org.Hs.eg.db)
+library(rstatix)
+
 
 
 
@@ -229,6 +236,21 @@ Mvoles_names <- unique(Mvoles$sample)
 ###############################################################################
 
 
+res <- results(dds, contrast = c("Condition", "4wk_sep", "2wk_pair"))
+res <- as.data.frame(res)
+
+res$gene_id <- rownames(res)
+
+res_sig <- res %>% arrange(padj)  %>% filter(padj<0.1)
+
+res_sig$gene_id <- rownames(res_sig)
+res_sig <- merge(res_sig, switchnamesdf, by="gene_id")
+
+res_sig <- res_sig %>% arrange(padj)
+
+plotCounts(dds, gene="ENSMOCG00000000071", intgroup = "Condition")
+
+write.csv(res_sig, paste0(outdir,"Deseq2_genes_sig_4wk_sep_vs_2wk_paired.csv"))
 
 ntd <- normTransform(dds)
 
@@ -556,9 +578,30 @@ shapiro.test(
 
 kruskal.test(dist_value ~ type, data = stdftypes_not_gendered)
 
-pairwise.wilcox.test(stdftypes_not_gendered$dist_value,
-                     stdftypes_not_gendered$type,
-                     p.adjust.method = "holm")
+
+stdftypes_not_gendered <- stdftypes_not_gendered %>%
+  mutate(
+    type2 = ifelse(
+      type == "scrambled_partmers",  "scrambled_partmers",
+      ifelse(
+        type == "precage_partners", "precage_partners",
+        "matepaired")))
+
+
+
+rstatix::pairwise_wilcox_test(stdftypes_not_gendered, 
+  dist_value ~ type2,
+  p.adjust.method = "holm",
+  detailed = TRUE
+)
+
+
+rstatix::pairwise_wilcox_test(stdftypes_not_gendered, 
+                              dist_value ~ type,
+                              p.adjust.method = "holm",
+                              detailed = TRUE
+)
+
 
 
 stdftypes <- rbind(stdftypes, premating_pairs_df_match_for_stdf_gendered)
@@ -615,11 +658,14 @@ ggplot(precagepartners, aes(x=Mvole, y=dist_value))+geom_violin()+geom_boxplot(w
 
 mod_genes <- read.csv(paste0(indir,"new_clusts_hotspot-gene-modules.csv"))
 
+
 whichmod = 6
 
 onemodgenes <- mod_genes %>% filter(Module==whichmod)
 dim(onemodgenes)
 
+res_sig_modgenes <- res_sig %>% filter(gene_name %in% onemodgenes)
+#none of the genes that change sig with pairtype are in the module 6
 
 geneshalf <- switchnamesdf %>% filter(gene_name %in% onemodgenes$Gene)
 genesotherhalf <- switchnamesdf %>% filter(gene_id %in% onemodgenes$Gene)
@@ -1138,23 +1184,10 @@ pdf(paste0(outdir,"Femaleheatmapeuclidean.pdf"), width = 8, height = 6)  # width
 draw(ht_list)                                  # or draw(ht_list, merge_legend = TRUE, ...)
 dev.off()
 
+###############################################################################
+# 17. Genes that correlate
+###############################################################################
 
-#Which genes correlate in partners
-
-
-#corrs_pvals_geneexp <- corrs_long %>%
-#  group_by(gene) %>%
-#  summarise(
-#    real_abs = abs_corr[typepairs == "realpairs"],
-#    rand_abs = list(abs_corr[typepairs == "randompairs"]),
-#    .groups = "drop"
-#  ) %>%
-#  rowwise() %>%
-#  mutate(
-#    p_empirical = (sum(unlist(rand_abs) >= real_abs) + 1) /
-#      (length(unlist(rand_abs)) + 1)
-#  ) %>%
-#  ungroup()
 
 corrs_pvals_geneexp <- corrs_long %>%
   group_by(gene) %>%
@@ -1283,7 +1316,7 @@ graphageneAn1Ani2 <- function(agenename){
 
 
 ###############################################################################
-# 14. SINGLE GENES
+# 18. SINGLE GENES
 ###############################################################################
 
 #agenename = "ENSMOCG00000005133"
@@ -1312,4 +1345,169 @@ ggsave(
   height   = 5,
   dpi      = 300
 )}
+
+###############################################################################
+# 19. orthologs so I can use go terms
+###############################################################################
+
+
+ensembl <- useEnsembl(
+  biomart = "ensembl",
+  dataset = "hsapiens_gene_ensembl",
+  mirror  = "useast"      # or "uswest", "asia"
+)
+
+# Use current Ensembl
+ensembl <- useEnsembl(biomart = "ensembl")  
+
+
+# Prairie vole gene dataset
+moc <- useEnsembl(biomart = "ensembl", dataset = "mochrogaster_gene_ensembl")  
+
+# Human gene dataset
+hs  <- useEnsembl(biomart = "ensembl", dataset = "hsapiens_gene_ensembl")    
+
+
+orth_moc_hs <- getBM(
+  attributes = c("ensembl_gene_id",                     # vole ENSMOCG...
+                 "external_gene_name",                  # vole gene symbol (if any)
+                 "hsapiens_homolog_ensembl_gene",       # human ENSG...
+                 "hsapiens_homolog_associated_gene_name",
+                 "hsapiens_homolog_orthology_type"),    # one2one, one2many, etc.
+  mart = moc
+)
+
+
+
+orth_1to1 <- subset(orth_moc_hs,
+                    hsapiens_homolog_orthology_type == "ortholog_one2one")
+
+
+res_human <- res %>%
+  inner_join(orth_1to1,
+             by = c("gene_id" = "ensembl_gene_id"))
+
+# Foreground = significant DE genes mapped to human
+fg_hs <- res_human %>%
+  filter(!is.na(padj), padj < 0.1) %>%
+  pull(hsapiens_homolog_associated_gene_name) %>%
+  unique()
+
+
+fg_hs_down_4week <- res_human %>%
+  filter(!is.na(padj), padj < 0.1, log2FoldChange < 0) %>%
+  pull(hsapiens_homolog_associated_gene_name) %>%
+  unique()
+
+fg_hs_up_4week <- res_human %>%
+  filter(!is.na(padj), padj < 0.1, log2FoldChange > 0) %>%
+  pull(hsapiens_homolog_associated_gene_name) %>%
+  unique()
+
+# Background = all tested genes with a human ortholog
+bg_hs <- res_human %>%
+  filter(!is.na(hsapiens_homolog_associated_gene_name)) %>%
+  pull(hsapiens_homolog_associated_gene_name) %>%
+  unique()
+
+#gocat = "BP"
+#gocat = "MF"
+gocat = "CC"
+
+
+# If your IDs are ENSEMBL:
+ego_bp <- enrichGO(
+  gene          = fg_hs,
+  universe      = bg_hs,
+  OrgDb         = org.Hs.eg.db,
+  keyType       = "SYMBOL",
+  ont           = gocat,             # "BP", "MF", or "CC"
+  pAdjustMethod = "BH",
+  pvalueCutoff  = 0.05,
+  qvalueCutoff  = 0.2,
+  readable      = TRUE           
+)
+
+head(as.data.frame(ego_bp), 20)
+
+p <- dotplot(ego_bp, showCategory = 20)
+p
+
+ggsave(
+  filename = paste0(outdir,"plot_all_go_",gocat,".png"),
+  plot     = p,
+  width    = 6,   # inches
+  height   = 5,
+  dpi      = 300  
+)
+
+
+# If your IDs are ENSEMBL:
+ego_bp_down_4week <- enrichGO(
+  gene          = fg_hs_down_4week,
+  universe      = bg_hs,
+  OrgDb         = org.Hs.eg.db,
+  keyType       = "SYMBOL",
+  ont           = gocat,             # "BP", "MF", or "CC"
+  pAdjustMethod = "BH",
+  pvalueCutoff  = 0.05,
+  qvalueCutoff  = 0.2,
+  readable      = TRUE           
+)
+
+# Look at results
+head(as.data.frame(ego_bp_down_4week), 20)
+
+p <- dotplot(ego_bp_down_4week, showCategory = 20)
+p
+
+ggsave(
+  filename = paste0(outdir,"plot_down_4weeks_go_",gocat,".png"),
+  plot     = p,
+  width    = 6,   # inches
+  height   = 5,
+  dpi      = 300  # ignored for pure vector but fine to set
+)
+
+ego_bp_up_4week <- enrichGO(
+  gene          = fg_hs_up_4week,
+  universe      = bg_hs,
+  OrgDb         = org.Hs.eg.db,
+  keyType       = "SYMBOL",
+  ont           = gocat,             # "BP", "MF", or "CC"
+  pAdjustMethod = "BH",
+  pvalueCutoff  = 0.05,
+  qvalueCutoff  = 0.2,
+  readable      = TRUE    
+)
+
+# Look at results
+head(as.data.frame(ego_bp_up_4week), 20)
+
+p <- dotplot(ego_bp_up_4week, showCategory = 20)
+p
+
+ggsave(
+  filename = paste0(outdir,"plot_up_4weeks_go_",gocat,".png"),
+  plot     = p,
+  width    = 6,   # inches
+  height   = 5,
+  dpi      = 300  
+)
+
+
+genes_GO_up <- ego_bp_up_4week %>%
+  as.data.frame() %>%                     
+  filter(ID == "GO:0048562") %>%
+  pull(geneID) %>%
+  strsplit("/") %>%                       
+  unlist()
+
+genes_GO_down <- ego_bp_down_4week %>%
+  as.data.frame() %>%                      
+  filter(ID == "GO:0008038") %>%
+  pull(geneID) %>%
+  strsplit("/") %>%                        
+  unlist()
+
 
